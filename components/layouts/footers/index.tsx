@@ -1,5 +1,6 @@
 import { TelegramIcon, XIcon } from "@/components/icons";
 import Logo from "@/components/logo";
+import { ThemeToggle } from "@/components/theme/toggler";
 import Link from "next/link";
 
 const links = [
@@ -62,6 +63,7 @@ export default function FooterSection() {
               <social.icon className="size-6" />
             </Link>
           ))}
+          <ThemeToggle />
         </div>
         <span className="text-muted-foreground block text-center text-sm">
           {" "}
