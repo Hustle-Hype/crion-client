@@ -6,7 +6,7 @@ export default function HeroSection() {
       <div className="absolute h-[414px] w-full top-[-100px]">
         <div className="transform-gpu absolute h-[90px] w-full left-1/2 -translate-x-1/2 blur-[50px] [border-radius:50%_100%] bg-[#ABF2FF] mix-blend-plus-lighter" />
       </div>
-      <div className="transform-gpu hero-eclipse h-[2500px] w-[1130px] left-1/2 -top-[1500px] -translate-x-1/2 absolute mix-blend-color-dodge"></div>
+      <div className="transform-gpu hero-eclipse h-[2500px] w-screen left-1/2 -top-[1500px] -translate-x-1/2 absolute mix-blend-color-dodge"></div>
     </div>
   );
 }
