@@ -32,17 +32,17 @@ export const HomeHeader = () => {
           className={cn(
             "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-2",
             isScrolled &&
-              "bg-background-card-foreground/80 overflow-hidden backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-2 gradient-border before:bg-border"
+              "bg-[#171a20cc]/80 overflow-hidden backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-1 gradient-border before:bg-border"
           )}
         >
-          <div className="relative flex flex-wrap items-center justify-between gap-6 py-2 lg:gap-0">
+          <div className="relative flex flex-wrap items-center justify-between gap-6 py-1 lg:gap-0">
             <div className="flex w-full justify-between lg:w-auto">
               <Link
                 href="/"
                 aria-label="home"
                 className="flex items-center space-x-2"
               >
-                <Logo />
+                <Logo isScrolled={isScrolled} />
               </Link>
 
               <button
