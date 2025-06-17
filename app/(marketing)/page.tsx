@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       <HomeHeader />
-      <div className="relative min-h-[100dvh]">
+      <div className="relative min-h-[100dvh] overflow-hidden">
         <HeroSection />
       </div>
       <Footer />
