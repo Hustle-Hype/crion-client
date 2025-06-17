@@ -1,14 +1,13 @@
 "use client";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import React from "react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/logo";
+import { HyperText } from "@/components/hyper-text";
 
 const menuItems = [
   { name: "Explore", href: "#link" },
-  { name: "How It Works", href: "#link" },
   { name: "Ranking", href: "#link" },
 ];
 
@@ -56,27 +55,26 @@ export const HomeHeader = () => {
               </button>
             </div>
 
-            <div
-              className={cn(
-                "absolute inset-0 m-auto hidden size-fit lg:block",
-                isScrolled && "lg:hidden"
-              )}
-            >
-              <ul className="flex gap-8 text-md font-medium">
-                {menuItems.map((item, index) => (
-                  <li key={index}>
-                    <Link
-                      href={item.href}
-                      className="text-secondary transition duration-400 hover:text-primary font-mono"
-                    >
-                      <span>{item.name}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
             <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+              <div
+                className={cn(
+                  "m-auto hidden size-fit lg:block",
+                  isScrolled && "lg:hidden"
+                )}
+              >
+                <ul className="flex gap-8 text-sm font-medium w-[180px]">
+                  {menuItems.map((item, index) => (
+                    <li key={index} className="w-[100%]">
+                      <Link
+                        href={item.href}
+                        className="text-secondary transition duration-400 hover:text-primary font-mono uppercase "
+                      >
+                        <HyperText>{item.name}</HyperText>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
               <div className="lg:hidden">
                 <ul className="space-y-6 text-base">
                   {menuItems.map((item, index) => (
@@ -92,11 +90,14 @@ export const HomeHeader = () => {
                 </ul>
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <Button asChild className="lg:inline-flex">
-                  <Link className="text-md font-medium" href="#">
-                    <span>Connect Wallet</span>
+                <button className="w-[190px] lg:inline-flex group/button flex items-center cursor-pointer justify-center font-medium gap-x-2 flex-shrink-0 gradient-border px-4.5 py-3 text-[14px] rounded-xl text-sm leading-none transition before:[background:linear-gradient(180deg,_rgba(255,255,255,0.25)_0%,_rgba(255,255,255,0.15)_100%)] text-background [background:radial-gradient(161.28%_68.75%_at_50%_68.75%,_rgba(255,255,255,0)_0%,_rgba(255,255,255,0.5)_100%),_#00FFFF] shadow-[0px_0px_12px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF] hover:shadow-[0px_0px_20px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF]">
+                  <Link
+                    className="flex items-center gap-2 text-sm font-medium uppercase"
+                    href="#"
+                  >
+                    <HyperText>Connect Wallet</HyperText>
                   </Link>
-                </Button>
+                </button>
               </div>
             </div>
           </div>
