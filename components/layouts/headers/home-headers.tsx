@@ -33,7 +33,7 @@ export const HomeHeader = () => {
           className={cn(
             "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-2",
             isScrolled &&
-              "bg-background/50 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-2"
+              "bg-background-card-foreground/80 overflow-hidden backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-2 gradient-border before:bg-border"
           )}
         >
           <div className="relative flex flex-wrap items-center justify-between gap-6 py-2 lg:gap-0">
@@ -62,12 +62,12 @@ export const HomeHeader = () => {
                 isScrolled && "lg:hidden"
               )}
             >
-              <ul className="flex gap-8 text-sm">
+              <ul className="flex gap-8 text-md font-medium">
                 {menuItems.map((item, index) => (
                   <li key={index}>
                     <Link
                       href={item.href}
-                      className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                      className="text-secondary transition duration-400 hover:text-primary font-mono"
                     >
                       <span>{item.name}</span>
                     </Link>
@@ -93,7 +93,7 @@ export const HomeHeader = () => {
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
                 <Button asChild className="lg:inline-flex">
-                  <Link href="#">
+                  <Link className="text-md font-medium" href="#">
                     <span>Connect Wallet</span>
                   </Link>
                 </Button>
