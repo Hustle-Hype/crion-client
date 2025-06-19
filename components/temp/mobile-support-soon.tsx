@@ -10,7 +10,7 @@ export default function MobileSupportSoon() {
       <div className="absolute h-[414px] w-full top-[-100px]">
         <div className="transform-gpu absolute h-[90px] w-full left-1/2 -translate-x-1/2 blur-[50px] [border-radius:50%_100%] bg-[#ABF2FF] mix-blend-plus-lighter" />
       </div>
-      <div className="transform-gpu hero-eclipse h-[2500px] w-screen left-1/2 -top-[1500px] -translate-x-1/2 absolute mix-blend-color-dodge"></div>
+      {/* <div className="transform-gpu hero-eclipse h-[2500px] w-screen left-1/2 -top-[1500px] -translate-x-1/2 absolute mix-blend-color-dodge"></div> */}
       <div className="relative items-center justify-center lg:items-start  mx-auto mt-10 lg:mt-0 lg:absolute lg:top-60 lg:left-50 flex flex-col gap-2 px-4 sm:px-6 lg:px-0">
         <Logo />
         <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold z-50 pointer-events-none text-center lg:text-left">
