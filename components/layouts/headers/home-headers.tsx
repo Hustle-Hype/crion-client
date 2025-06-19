@@ -5,6 +5,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/logo";
 import { HyperText } from "@/components/hyper-text";
+import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { name: "Explore", href: "#link" },
@@ -90,14 +91,14 @@ export const HomeHeader = () => {
                 </ul>
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <button className="w-[190px] lg:inline-flex group/button flex items-center cursor-pointer justify-center font-medium gap-x-2 flex-shrink-0 gradient-border px-4.5 py-3 text-[14px] rounded-xl text-sm leading-none transition before:[background:linear-gradient(180deg,_rgba(255,255,255,0.25)_0%,_rgba(255,255,255,0.15)_100%)] text-background [background:radial-gradient(161.28%_68.75%_at_50%_68.75%,_rgba(255,255,255,0)_0%,_rgba(255,255,255,0.5)_100%),_#00FFFF] shadow-[0px_0px_12px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF] hover:shadow-[0px_0px_20px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF]">
+                <Button variant="crion" asChild>
                   <Link
                     className="flex items-center gap-2 text-sm font-medium uppercase"
                     href="#"
                   >
-                    <HyperText>Connect Wallet</HyperText>
+                    <HyperText animateOnHover={false}>Connect Wallet</HyperText>
                   </Link>
-                </button>
+                </Button>
               </div>
             </div>
           </div>
