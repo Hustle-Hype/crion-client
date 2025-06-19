@@ -33,7 +33,7 @@ const socialLinks = [
 
 export default function FooterSection() {
   return (
-    <footer className="py-16 md:py-32">
+    <footer className="py-16 md:py-32 bg-[#0B0E14]">
       <div className="mx-auto max-w-5xl px-6">
         <Link href="/" aria-label="go home" className="mx-auto block size-fit">
           <Logo />

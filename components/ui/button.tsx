@@ -20,6 +20,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        crion:
+          "lg:inline-flex group/button flex items-center cursor-pointer justify-center font-medium gap-x-2 flex-shrink-0 gradient-border px-4.5 py-3 text-[14px] rounded-xl text-sm leading-none transition before:[background:linear-gradient(180deg,_rgba(255,255,255,0.25)_0%,_rgba(255,255,255,0.15)_100%)] text-background [background:radial-gradient(161.28%_68.75%_at_50%_68.75%,_rgba(255,255,255,0)_0%,_rgba(255,255,255,0.5)_100%),_#00FFFF] shadow-[0px_0px_12px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF] hover:shadow-[0px_0px_20px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF] uppercase",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
