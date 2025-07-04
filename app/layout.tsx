@@ -3,6 +3,7 @@ import { Funnel_Display } from "next/font/google";
 import "@/styles/globals.css";
 import Providers from "@/components/providers";
 import MobileSupportSoon from "@/components/temp/mobile-support-soon";
+import { Toaster } from "@/components/ui/toaster";
 
 const fontSans = Funnel_Display({
   variable: "--font-funnel-display",
@@ -31,6 +32,7 @@ export default function RootLayout({
         <div className="block lg:hidden">
           <MobileSupportSoon />
         </div>
+        <Toaster />
       </body>
     </html>
   );
