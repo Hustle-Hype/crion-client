@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import Logo from "@/components/logo";
 import { HyperText } from "@/components/hyper-text";
 import { Button } from "@/components/ui/button";
+import { WalletSelector } from "@/components/wallet-selector";
 
 const menuItems = [
   { name: "Explore", href: "#link" },
@@ -33,7 +34,7 @@ export const HomeHeader = () => {
           className={cn(
             "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-2",
             isScrolled &&
-              "bg-[#171a20cc]/80 overflow-hidden backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-1 gradient-border before:bg-border"
+            "bg-[#171a20cc]/80 overflow-hidden backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-1 gradient-border before:bg-border"
           )}
         >
           <div className="relative flex flex-wrap items-center justify-between gap-6 py-1 lg:gap-0">
@@ -91,14 +92,7 @@ export const HomeHeader = () => {
                 </ul>
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <Button variant="crion" asChild>
-                  <Link
-                    className="flex items-center gap-2 text-sm font-medium uppercase"
-                    href="#"
-                  >
-                    <HyperText animateOnHover={false}>Connect Wallet</HyperText>
-                  </Link>
-                </Button>
+                <WalletSelector />
               </div>
             </div>
           </div>
