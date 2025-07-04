@@ -11,6 +11,7 @@ import { WalletSelector } from "@/components/wallet-selector";
 const menuItems = [
   { name: "Explore", href: "#link" },
   { name: "Ranking", href: "#link" },
+  { name: "Passport", href: "/passport" },
   { name: "Profile", href: "/profile" },
 ];
 
@@ -33,12 +34,12 @@ export const HomeHeader = () => {
       >
         <div
           className={cn(
-            "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-2",
+            "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-4",
             isScrolled &&
-            "bg-[#171a20cc]/80 overflow-visible backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-1 gradient-border before:bg-border"
+            "bg-[#171a20cc]/80 overflow-visible backdrop-blur-lg max-w-5xl rounded-2xl border lg:px-3 gradient-border before:bg-border"
           )}
         >
-          <div className="relative flex flex-wrap items-center justify-between gap-6 py-1 lg:gap-0">
+          <div className="relative flex flex-wrap items-center justify-between gap-4 py-1 lg:gap-6">
             <div className="flex w-full justify-between lg:w-auto">
               <Link
                 href="/"
@@ -61,16 +62,16 @@ export const HomeHeader = () => {
             <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
               <div
                 className={cn(
-                  "m-auto hidden size-fit lg:block",
+                  "hidden lg:block",
                   isScrolled && "lg:hidden"
                 )}
               >
-                <ul className="flex gap-8 text-sm font-medium w-[180px]">
+                <ul className="flex gap-6 text-sm font-medium">
                   {menuItems.map((item, index) => (
-                    <li key={index} className="w-[100%]">
+                    <li key={index} className="whitespace-nowrap">
                       <Link
                         href={item.href}
-                        className="text-secondary transition duration-400 hover:text-primary font-mono uppercase "
+                        className="text-secondary transition duration-400 hover:text-primary font-mono uppercase"
                       >
                         <HyperText>{item.name}</HyperText>
                       </Link>
@@ -92,7 +93,7 @@ export const HomeHeader = () => {
                   ))}
                 </ul>
               </div>
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit relative">
+              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit lg:ml-8">
                 <WalletSelector />
               </div>
             </div>

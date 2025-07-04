@@ -10,6 +10,7 @@ const routeLabels: Record<string, string> = {
     "/auth/login": "Login",
     "/dashboard": "Dashboard",
     "/profile": "Profile",
+    "/passport": "Passport",
     "/market": "Market",
 };
 
@@ -47,8 +48,8 @@ export default function DynamicBreadcrumb() {
     });
 
     return (
-        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-20 pb-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <Breadcrumb items={items} />
             </div>
         </div>

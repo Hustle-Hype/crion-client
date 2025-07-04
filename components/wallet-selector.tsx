@@ -98,23 +98,23 @@ export function WalletSelector() {
             <div className="relative" ref={dropdownRef}>
                 <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-all duration-200"
+                    className="flex items-center gap-2 lg:gap-3 p-2 lg:p-3 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-all duration-200 min-w-0"
                 >
                     <img
                         src={getAvatarUrl(account.address)}
                         alt="Avatar"
-                        className="w-8 h-8 rounded-full"
+                        className="w-6 h-6 lg:w-8 lg:h-8 rounded-full flex-shrink-0"
                     />
-                    <div className="flex flex-col">
-                        <div className="text-sm font-medium text-white">
-                            {`${account.address.slice(0, 6)}...${account.address.slice(-4)}`}
+                    <div className="min-w-0 hidden sm:flex sm:flex-col">
+                        <div className="text-xs lg:text-sm font-medium text-white truncate">
+                            {`${account.address.slice(0, 4)}...${account.address.slice(-3)}`}
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-gray-400 truncate">
                             Score: {userData.score} | Staked: {userData.stakedAmount}
                         </div>
                     </div>
                     <svg
-                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        className={`w-3 h-3 lg:w-4 lg:h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -125,12 +125,13 @@ export function WalletSelector() {
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-[#0B0E14] border border-white/10 rounded-lg shadow-2xl z-[100] overflow-hidden backdrop-blur-sm"
+                    <div className="absolute right-0 mt-2 w-56 lg:w-64 bg-[#0B0E14] border border-white/10 rounded-lg shadow-2xl z-[100] overflow-hidden backdrop-blur-sm transform origin-top-right"
                         style={{
                             background: 'linear-gradient(135deg, rgba(11, 14, 20, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%)',
                             backdropFilter: 'blur(20px)',
                             border: '1px solid rgba(171, 242, 255, 0.2)',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+                            animation: 'fadeInScale 0.2s ease-out'
                         }}>
                         {/* User Info Header */}
                         <div className="p-4 border-b border-white/10">

@@ -41,8 +41,8 @@ export default function PageLayout({ children, className = "" }: PageLayoutProps
             {/* Breadcrumb */}
             <DynamicBreadcrumb />
 
-            {/* Main Content - chỉ thêm padding cho các trang không phải home */}
-            <main className={`flex-1 pt-20 py-6 ${className}`}>
+            {/* Main Content - spacing chuẩn, loại bỏ pt-20 vì breadcrumb đã có */}
+            <main className={`flex-1 py-8 ${className}`}>
                 {children}
             </main>
 
