@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { HyperText } from "@/components/hyper-text";
 import { useWallet } from "@/hooks/wallet/useWallet";
 import { PetraIcon, MartianIcon, PontemIcon } from "@/components/icons/wallet-icons";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 interface Wallet {
     name: string;
@@ -14,6 +16,10 @@ interface Wallet {
 
 export function WalletSelector() {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
+
     const {
         connect,
         disconnect,
@@ -23,7 +29,8 @@ export function WalletSelector() {
         handleWalletLogin,
         authenticated,
         userData,
-        getAvatarUrl
+        getAvatarUrl,
+        logout
     } = useWallet();
 
     // Wallet list with better icons and more options
@@ -45,6 +52,37 @@ export function WalletSelector() {
         },
     ];
 
+    // Handle click outside dropdown
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        }
+
+        if (isDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isDropdownOpen]);
+
+    const handleProfileClick = () => {
+        setIsDropdownOpen(false);
+        router.push('/profile');
+    };
+
+    const handleLogout = () => {
+        setIsDropdownOpen(false);
+        logout();
+        toast({
+            title: "Logged out",
+            description: "You have been successfully logged out.",
+        });
+    };
+
     const connectToPetra = async () => {
         await connect();
         setIsModalOpen(false);
@@ -54,30 +92,91 @@ export function WalletSelector() {
         await disconnect();
     };
 
-    // If authenticated, show user info
+    // If authenticated, show user dropdown
     if (authenticated && userData && account) {
         return (
-            <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm">
-                <img
-                    src={getAvatarUrl(account.address)}
-                    alt="Avatar"
-                    className="w-8 h-8 rounded-full"
-                />
-                <div className="flex flex-col">
-                    <div className="text-sm font-medium text-white">
-                        {`${account.address.slice(0, 6)}...${account.address.slice(-4)}`}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                        Score: {userData.score} | Staked: {userData.stakedAmount}
-                    </div>
-                </div>
-                <Button
-                    variant="outline"
-                    onClick={handleDisconnect}
-                    className="text-xs px-2 py-1 h-auto"
+            <div className="relative" ref={dropdownRef}>
+                <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-all duration-200"
                 >
-                    Disconnect
-                </Button>
+                    <img
+                        src={getAvatarUrl(account.address)}
+                        alt="Avatar"
+                        className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                        <div className="text-sm font-medium text-white">
+                            {`${account.address.slice(0, 6)}...${account.address.slice(-4)}`}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                            Score: {userData.score} | Staked: {userData.stakedAmount}
+                        </div>
+                    </div>
+                    <svg
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-[#0B0E14] border border-white/10 rounded-lg shadow-2xl z-[100] overflow-hidden backdrop-blur-sm"
+                        style={{
+                            background: 'linear-gradient(135deg, rgba(11, 14, 20, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%)',
+                            backdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(171, 242, 255, 0.2)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+                        }}>
+                        {/* User Info Header */}
+                        <div className="p-4 border-b border-white/10">
+                            <div className="flex items-center gap-3">
+                                <img
+                                    src={getAvatarUrl(account.address)}
+                                    alt="Avatar"
+                                    className="w-12 h-12 rounded-full"
+                                />
+                                <div className="flex-1">
+                                    <div className="font-medium text-white text-sm">
+                                        {userData.username || `User ${account.address.slice(0, 6)}`}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                        {`${account.address.slice(0, 8)}...${account.address.slice(-6)}`}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Menu Items */}
+                        <div className="py-2">
+                            <button
+                                onClick={handleProfileClick}
+                                className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors duration-200 flex items-center gap-3"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                View Profile
+                            </button>
+
+                            <div className="border-t border-white/10 my-1"></div>
+
+                            <button
+                                onClick={handleLogout}
+                                className="w-full px-4 py-3 text-left text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors duration-200 flex items-center gap-3"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }

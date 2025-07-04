@@ -11,6 +11,7 @@ import { WalletSelector } from "@/components/wallet-selector";
 const menuItems = [
   { name: "Explore", href: "#link" },
   { name: "Ranking", href: "#link" },
+  { name: "Profile", href: "/profile" },
 ];
 
 export const HomeHeader = () => {
@@ -34,7 +35,7 @@ export const HomeHeader = () => {
           className={cn(
             "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-2",
             isScrolled &&
-            "bg-[#171a20cc]/80 overflow-hidden backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-1 gradient-border before:bg-border"
+            "bg-[#171a20cc]/80 overflow-visible backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-1 gradient-border before:bg-border"
           )}
         >
           <div className="relative flex flex-wrap items-center justify-between gap-6 py-1 lg:gap-0">
@@ -91,7 +92,7 @@ export const HomeHeader = () => {
                   ))}
                 </ul>
               </div>
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit relative">
                 <WalletSelector />
               </div>
             </div>
