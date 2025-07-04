@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "../use-toast";
+import { useAuth, apiClient } from "@/contexts/AuthContext";
 
 export const API_URL_AUTH = `${process.env.NEXT_PUBLIC_API_URL}/auth`;
 
@@ -31,7 +32,7 @@ interface UseWalletReturn {
   connected: boolean;
   connecting: boolean;
   authenticated: boolean;
-  userData: UserData | null;
+  userData: any;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   signMessage: (message: {
@@ -40,29 +41,23 @@ interface UseWalletReturn {
   }) => Promise<{ signature: string }>;
   handleWalletLogin: () => Promise<void>;
   getAvatarUrl: (address: string) => string;
+  logout: () => void;
 }
 
 export function useWallet(): UseWalletReturn {
   const [account, setAccount] = useState<WalletAccount | null>(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const { user, isAuthenticated, getMe, setTokens, logout } = useAuth();
 
   // Check if wallet is already connected on mount
   useEffect(() => {
     checkConnection();
     checkAuthState();
   }, []);
-
   const checkAuthState = () => {
-    const accessToken = localStorage.getItem("accessToken");
-    const storedUserData = localStorage.getItem("userData");
-
-    if (accessToken && storedUserData) {
-      setAuthenticated(true);
-      setUserData(JSON.parse(storedUserData));
-    }
+    // Auth state is now managed by AuthContext
+    // This function can be removed or simplified
   };
 
   const getAvatarUrl = (address: string) => {
@@ -144,13 +139,7 @@ export function useWallet(): UseWalletReturn {
       }
       setAccount(null);
       setConnected(false);
-      setAuthenticated(false);
-      setUserData(null);
-
-      // Clear stored auth data
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userData");
+      logout(); // Use AuthContext logout
 
       toast({
         title: "Wallet disconnected",
@@ -262,17 +251,13 @@ export function useWallet(): UseWalletReturn {
 
       const { accessToken, refreshToken, user } = loginResponse.data.data;
 
-      // Save tokens and user data
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("userData", JSON.stringify(user));
+      // Store tokens using AuthContext
+      setTokens(accessToken, refreshToken);
 
-      // Update state
-      setAuthenticated(true);
-      setUserData(user);
+      // Get user profile via AuthContext
+      await getMe();
 
       toast({
-        variant: "success",
         title: "Login successful",
         description: `Welcome back! Connected to ${user.address.slice(
           0,
@@ -300,12 +285,13 @@ export function useWallet(): UseWalletReturn {
     account,
     connected,
     connecting,
-    authenticated,
-    userData,
+    authenticated: isAuthenticated,
+    userData: user,
     connect,
     disconnect,
     signMessage,
     handleWalletLogin,
     getAvatarUrl,
+    logout,
   };
 }
