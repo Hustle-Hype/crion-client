@@ -80,7 +80,7 @@ export default function ProfilePage() {
 
     if (isLoading) {
         return (
-            <div className="container max-w-4xl mx-auto p-6">
+            <div className="container max-w-4xl mx-auto px-6">
                 <div className="flex items-center justify-center py-12">
                     <div className="text-center">
                         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
@@ -93,7 +93,7 @@ export default function ProfilePage() {
 
     if (!isAuthenticated || !user) {
         return (
-            <div className="container max-w-4xl mx-auto p-6">
+            <div className="container max-w-4xl mx-auto px-6">
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
                         <User className="h-12 w-12 text-gray-400 mb-4" />
@@ -115,7 +115,7 @@ export default function ProfilePage() {
     const avatarUrl = user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.primaryWallet}`;
 
     return (
-        <div className="container max-w-4xl mx-auto p-6 space-y-6">
+        <div className="container max-w-4xl mx-auto px-6 space-y-6">
             {/* Header */}
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Profile</h1>
@@ -273,15 +273,15 @@ export default function ProfilePage() {
                 </Card>
 
                 {/* Social Links */}
-                {user.socialLinks.length > 0 && (
-                    <Card className="md:col-span-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
-                                Social Links
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
+                <Card className="md:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <User className="h-5 w-5" />
+                            Social Links
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {user.socialLinks && user.socialLinks.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {user.socialLinks.map((link, index) => (
                                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
@@ -297,9 +297,20 @@ export default function ProfilePage() {
                                     </div>
                                 ))}
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
+                        ) : (
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p className="text-sm">No social links connected yet</p>
+                                <p className="text-xs mt-1">Visit your Passport to connect social accounts</p>
+                                <Button variant="outline" size="sm" className="mt-3" asChild>
+                                    <a href="/passport">
+                                        Go to Passport
+                                    </a>
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

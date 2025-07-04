@@ -57,7 +57,7 @@ function PassportOverview({ userData, account, totalScore }: {
     totalScore: number;
 }) {
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-black rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -86,7 +86,7 @@ function PassportOverview({ userData, account, totalScore }: {
             </div>
 
             {/* Wallet Info */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-6">
+            <div className="bg-gray-50 dark:bg-black rounded-2xl p-6 border border-gray-200 dark:border-gray-800">
                 <div className="flex items-center space-x-3 mb-4">
                     <FaWallet className="w-5 h-5 text-blue-600" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -98,7 +98,7 @@ function PassportOverview({ userData, account, totalScore }: {
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                             Connected Address
                         </p>
-                        <code className="text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border">
+                        <code className="text-sm bg-white dark:bg-black px-3 py-2 rounded-lg border">
                             {account?.address
                                 ? truncateAddress(account.address.toString())
                                 : "Not connected"}
@@ -159,7 +159,7 @@ function SocialConnections({
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-black rounded-3xl shadow-xl p-6 border border-gray-200 dark:border-gray-800">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
                 <FaLink className="w-5 h-5 mr-3 text-blue-600" />
                 Social Connections
@@ -214,8 +214,8 @@ function SocialConnections({
                             onClick={() => handleSocialLink(provider as any)}
                             disabled={loading !== null || isProviderLinked(provider)}
                             className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${isProviderLinked(provider)
-                                ? "bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 opacity-50 cursor-not-allowed"
-                                : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-blue-300 dark:hover:border-blue-500"
+                                ? "bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed"
+                                : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-500"
                                 }`}
                         >
                             <div className="flex items-center space-x-3">
@@ -248,7 +248,7 @@ function AchievementHistory({ scoreHistory }: { scoreHistory: ScoreEntry[] }) {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-black rounded-3xl shadow-xl p-6 border border-gray-200 dark:border-gray-800">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
                 <FaTrophy className="w-5 h-5 mr-3 text-yellow-500" />
                 Achievement History
@@ -259,7 +259,7 @@ function AchievementHistory({ scoreHistory }: { scoreHistory: ScoreEntry[] }) {
                     {scoreHistory.map((entry) => (
                         <div
                             key={entry._id}
-                            className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
+                            className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-700"
                         >
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center space-x-2">
