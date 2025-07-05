@@ -107,16 +107,88 @@ export function useWallet(): UseWalletReturn {
       }
 
       const response = await aptosWallet.connect();
-      setAccount({
+      const newAccount = {
         address: response.address,
         publicKey: response.publicKey,
-      });
+      };
+      
+      setAccount(newAccount);
       setConnected(true);
+      
       toast({
         variant: "success",
         title: "Wallet connected",
         description: "Successfully connected to Petra wallet!",
       });
+
+      // Tự động thực hiện login ngay sau khi connect thành công
+      try {
+        const walletAddress = newAccount.address;
+        const publicKey = newAccount.publicKey;
+
+        // 1. Get nonce from server
+        const nonceResponse = await axios.get(`${API_URL_AUTH}/nonce`, {
+          params: { wallet_address: walletAddress },
+        });
+
+        const { nonce, message: messageString } = nonceResponse.data.data;
+
+        // 2. Sign message with wallet
+        const signedMessage = await aptosWallet.signMessage({
+          message: messageString,
+          nonce: nonce,
+        });
+
+        // Format signature for backend
+        let signature;
+        if (typeof signedMessage.signature === "string") {
+          const hexString = signedMessage.signature.replace("0x", "");
+          const byteArray: { [key: number]: number } = {};
+          for (let i = 0; i < hexString.length; i += 2) {
+            byteArray[i / 2] = parseInt(hexString.substr(i, 2), 16);
+          }
+          signature = { data: { data: byteArray } };
+        } else {
+          signature = signedMessage.signature;
+        }
+
+        const fullMessage = `${messageString}\nnonce: ${nonce}`;
+
+        // 3. Construct login payload
+        const loginPayload = {
+          address: walletAddress,
+          publicKey: publicKey,
+          signature: signature,
+          message: messageString,
+          nonce: nonce,
+          fullMessage: fullMessage,
+        };
+
+        // 4. Send login request
+        const loginResponse = await axios.post(
+          `${API_URL_AUTH}/wallet-login`,
+          loginPayload
+        );
+
+        const { accessToken, refreshToken, user } = loginResponse.data.data;
+
+        // Store tokens using AuthContext
+        setTokens(accessToken, refreshToken);
+
+        // Get user profile via AuthContext
+        await getMe();
+
+        toast({
+          title: "Login successful", 
+          description: `Welcome back! Connected to ${user.address.slice(0, 6)}...${user.address.slice(-4)}`,
+        });
+
+      } catch (loginError: any) {
+        console.error("Auto-login failed:", loginError);
+        // Không hiển thị error toast cho auto-login để không làm phiền user
+        // User vẫn có thể manual login nếu cần
+      }
+      
     } catch (error: any) {
       console.error("Failed to connect wallet:", error);
       toast({
@@ -127,7 +199,7 @@ export function useWallet(): UseWalletReturn {
     } finally {
       setConnecting(false);
     }
-  }, []);
+  }, [setTokens, getMe]);
 
   const disconnect = useCallback(async () => {
     if (typeof window === "undefined") return;
@@ -149,6 +221,26 @@ export function useWallet(): UseWalletReturn {
       console.error("Failed to disconnect wallet:", error);
     }
   }, []);
+
+  // Override logout to also disconnect wallet
+  const handleLogout = useCallback(async () => {
+    // First disconnect wallet if connected
+    if (connected && typeof window !== "undefined") {
+      try {
+        const aptosWallet = (window as any).aptos;
+        if (aptosWallet) {
+          await aptosWallet.disconnect();
+        }
+        setAccount(null);
+        setConnected(false);
+      } catch (error) {
+        console.error("Failed to disconnect wallet during logout:", error);
+      }
+    }
+    
+    // Then call AuthContext logout
+    logout();
+  }, [connected, logout]);
 
   const signMessage = useCallback(
     async (messageData: { message: string; nonce: string }) => {
@@ -292,6 +384,6 @@ export function useWallet(): UseWalletReturn {
     signMessage,
     handleWalletLogin,
     getAvatarUrl,
-    logout,
+    logout: handleLogout, // Use custom logout that also disconnects wallet
   };
 }

@@ -182,35 +182,27 @@ export function WalletSelector() {
         );
     }
 
-    // If connected but not authenticated, show login option
-    if (connected && account) {
+    // If connected but not authenticated, show connecting status or disconnect option  
+    if (connected && account && !authenticated) {
         return (
             <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-600 dark:text-gray-300">
                     {`${account.address.slice(0, 6)}...${account.address.slice(-4)}`}
                 </div>
-                <Button
-                    variant="crion"
-                    onClick={handleWalletLogin}
-                    disabled={connecting}
-                    className="flex items-center gap-2 text-sm font-medium uppercase"
-                >
-                    {connecting ? (
-                        <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Logging in...</span>
-                        </>
-                    ) : (
-                        <HyperText animateOnHover={false}>Login</HyperText>
-                    )}
-                </Button>
-                <Button
-                    variant="outline"
-                    onClick={handleDisconnect}
-                    className="text-sm"
-                >
-                    Disconnect
-                </Button>
+                {connecting ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                        <span>Signing in...</span>
+                    </div>
+                ) : (
+                    <Button
+                        variant="outline"
+                        onClick={handleDisconnect}
+                        className="text-sm"
+                    >
+                        Disconnect
+                    </Button>
+                )}
             </div>
         );
     }
@@ -220,15 +212,27 @@ export function WalletSelector() {
             <Button
                 variant="crion"
                 onClick={() => setIsModalOpen(true)}
-                className="relative flex items-center gap-2 text-sm font-medium uppercase overflow-hidden group"
+                disabled={connecting}
+                className="relative flex items-center gap-2 text-sm font-medium uppercase overflow-hidden group disabled:opacity-70"
             >
                 <div className="relative z-10 flex items-center gap-2">
-                    <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <HyperText animateOnHover={false}>Connect Wallet</HyperText>
+                    {connecting ? (
+                        <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Connecting...</span>
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <HyperText animateOnHover={false}>Connect Wallet</HyperText>
+                        </>
+                    )}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#ABF2FF]/20 via-transparent to-[#ABF2FF]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {!connecting && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#ABF2FF]/20 via-transparent to-[#ABF2FF]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                )}
             </Button>
 
             {/* Modal */}
