@@ -1,7 +1,7 @@
 import React from "react";
 import { FaUser, FaTrophy, FaWallet } from "react-icons/fa";
 import { truncateAddress } from "@/lib/utils";
-import toast from "react-hot-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface PassportOverviewProps {
     userData: {
@@ -13,6 +13,8 @@ interface PassportOverviewProps {
 }
 
 export default function PassportOverview({ userData, account, totalScore }: PassportOverviewProps) {
+    const { toast } = useToast();
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
@@ -65,7 +67,10 @@ export default function PassportOverview({ userData, account, totalScore }: Pass
                         <button
                             onClick={() => {
                                 navigator.clipboard.writeText(account.address.toString());
-                                toast.success("Address copied to clipboard");
+                                toast({
+                                    title: "Success",
+                                    description: "Address copied to clipboard",
+                                });
                             }}
                             className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
