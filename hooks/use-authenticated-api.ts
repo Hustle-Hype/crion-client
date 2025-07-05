@@ -2,8 +2,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const useAuthenticatedApi = () => {
   const router = useRouter();

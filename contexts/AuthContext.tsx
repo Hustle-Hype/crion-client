@@ -23,6 +23,21 @@ interface User {
     kycStatus: {
         status: string;
     };
+    score: {
+        _id: string;
+        issuerId: string;
+        scores: {
+            staking: number;
+            walletBehavior: number;
+            launchHistory: number;
+            social: number;
+            kyc: number;
+        };
+        totalScore: number;
+        tier: string;
+        createdAt: string;
+        updatedAt: string;
+    };
 }
 
 interface AuthContextType {

@@ -110,7 +110,7 @@ export function WalletSelector() {
                             {`${account.address.slice(0, 4)}...${account.address.slice(-3)}`}
                         </div>
                         <div className="text-xs text-gray-400 truncate">
-                            Score: {userData.score} | Staked: {userData.stakedAmount}
+                            Score: {userData.score?.totalScore || 0} | Staked: {userData.stakedAmount}
                         </div>
                     </div>
                     <svg
