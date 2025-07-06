@@ -14,10 +14,9 @@ export default function LoginPage() {
     const onWalletLogin = async () => {
         await handleWalletLogin();
         // If login successful, redirect to dashboard
-        // This should be handled by checking auth state in your app
         setTimeout(() => {
             router.push("/dashboard");
-        }, 1000);
+        }, 2000); // Tăng thời gian để user thấy được auto-connect
     };
 
     return (

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "../use-toast";
 import { useAuth, apiClient } from "@/contexts/AuthContext";
+import { useWallet as useAptosWallet } from "@aptos-labs/wallet-adapter-react";
 
 export const API_URL_AUTH = `${process.env.NEXT_PUBLIC_API_URL}/auth`;
 
@@ -49,6 +50,9 @@ export function useWallet(): UseWalletReturn {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const { user, isAuthenticated, getMe, setTokens, logout } = useAuth();
+
+  // Thêm Aptos wallet adapter
+  const aptosWallet = useAptosWallet();
 
   // Check if wallet is already connected on mount
   useEffect(() => {
@@ -111,10 +115,10 @@ export function useWallet(): UseWalletReturn {
         address: response.address,
         publicKey: response.publicKey,
       };
-      
+
       setAccount(newAccount);
       setConnected(true);
-      
+
       toast({
         variant: "success",
         title: "Wallet connected",
@@ -178,17 +182,44 @@ export function useWallet(): UseWalletReturn {
         // Get user profile via AuthContext
         await getMe();
 
-        toast({
-          title: "Login successful", 
-          description: `Welcome back! Connected to ${user.address.slice(0, 6)}...${user.address.slice(-4)}`,
-        });
+        // 5. TỰ ĐỘNG CONNECT APTOS WALLET ADAPTER SAU KHI LOGIN THÀNH CÔNG
+        try {
+          console.log("Attempting to connect Aptos wallet adapter...");
+          if (aptosWallet.wallets && aptosWallet.wallets.length > 0) {
+            const petraWallet =
+              aptosWallet.wallets.find((w: any) => w.name === "Petra") ||
+              aptosWallet.wallets[0];
+            console.log(
+              "Connecting to Aptos wallet adapter:",
+              petraWallet.name
+            );
 
+            // Chỉ connect nếu chưa connected
+            if (!aptosWallet.connected) {
+              await aptosWallet.connect(petraWallet.name);
+              console.log("Aptos wallet adapter connected successfully!");
+            }
+          }
+        } catch (aptosConnectError: any) {
+          console.warn(
+            "Failed to auto-connect Aptos wallet adapter:",
+            aptosConnectError
+          );
+          // Không show error toast vì đây là auto-connect, user có thể connect manual sau
+        }
+
+        toast({
+          title: "Login successful",
+          description: `Welcome back! Connected to ${user.address.slice(
+            0,
+            6
+          )}...${user.address.slice(-4)}`,
+        });
       } catch (loginError: any) {
         console.error("Auto-login failed:", loginError);
         // Không hiển thị error toast cho auto-login để không làm phiền user
         // User vẫn có thể manual login nếu cần
       }
-      
     } catch (error: any) {
       console.error("Failed to connect wallet:", error);
       toast({
@@ -205,42 +236,56 @@ export function useWallet(): UseWalletReturn {
     if (typeof window === "undefined") return;
 
     try {
-      const aptosWallet = (window as any).aptos;
-      if (aptosWallet) {
+      // Disconnect custom wallet (window.aptos)
+      const aptosWalletExtension = (window as any).aptos;
+      if (aptosWalletExtension) {
+        await aptosWalletExtension.disconnect();
+      }
+
+      // Disconnect Aptos wallet adapter
+      if (aptosWallet.connected) {
         await aptosWallet.disconnect();
       }
+
       setAccount(null);
       setConnected(false);
       logout(); // Use AuthContext logout
 
       toast({
         title: "Wallet disconnected",
-        description: "Successfully disconnected from wallet.",
+        description: "Successfully disconnected from all wallets.",
       });
     } catch (error) {
       console.error("Failed to disconnect wallet:", error);
     }
-  }, []);
+  }, [aptosWallet, logout]);
 
   // Override logout to also disconnect wallet
   const handleLogout = useCallback(async () => {
     // First disconnect wallet if connected
     if (connected && typeof window !== "undefined") {
       try {
-        const aptosWallet = (window as any).aptos;
-        if (aptosWallet) {
+        // Disconnect custom wallet
+        const aptosWalletExtension = (window as any).aptos;
+        if (aptosWalletExtension) {
+          await aptosWalletExtension.disconnect();
+        }
+
+        // Disconnect Aptos wallet adapter
+        if (aptosWallet.connected) {
           await aptosWallet.disconnect();
         }
+
         setAccount(null);
         setConnected(false);
       } catch (error) {
         console.error("Failed to disconnect wallet during logout:", error);
       }
     }
-    
+
     // Then call AuthContext logout
     logout();
-  }, [connected, logout]);
+  }, [connected, logout, aptosWallet]);
 
   const signMessage = useCallback(
     async (messageData: { message: string; nonce: string }) => {
@@ -348,6 +393,33 @@ export function useWallet(): UseWalletReturn {
 
       // Get user profile via AuthContext
       await getMe();
+
+      // TỰ ĐỘNG CONNECT APTOS WALLET ADAPTER SAU KHI LOGIN THÀNH CÔNG
+      try {
+        console.log(
+          "Attempting to connect Aptos wallet adapter after manual login..."
+        );
+        if (aptosWallet.wallets && aptosWallet.wallets.length > 0) {
+          const petraWallet =
+            aptosWallet.wallets.find((w: any) => w.name === "Petra") ||
+            aptosWallet.wallets[0];
+          console.log("Connecting to Aptos wallet adapter:", petraWallet.name);
+
+          // Chỉ connect nếu chưa connected
+          if (!aptosWallet.connected) {
+            await aptosWallet.connect(petraWallet.name);
+            console.log(
+              "Aptos wallet adapter connected successfully after manual login!"
+            );
+          }
+        }
+      } catch (aptosConnectError: any) {
+        console.warn(
+          "Failed to auto-connect Aptos wallet adapter after manual login:",
+          aptosConnectError
+        );
+        // Không show error toast vì đây là auto-connect
+      }
 
       toast({
         title: "Login successful",
