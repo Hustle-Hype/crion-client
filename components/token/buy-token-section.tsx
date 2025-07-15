@@ -1,21 +1,14 @@
-"use client";
-
+'use client';
 import React, { useState, useEffect, useCallback } from "react";
 import TokenTabs from "@/components/token/token-tab";
 import TokenToolbar from "@/components/token/token-tool-bar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
 import { toast } from "@/hooks/use-toast";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
-// Contract info (update to your deployed address)
 const CONTRACT_ADDRESS = "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
 const MODULE_NAME = "fa_factory";
-
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 const aptosConfig = new AptosConfig({
     network: Network.TESTNET,
@@ -84,7 +77,7 @@ interface TokenInfo {
     saleStatus: string;
 }
 
-export default function BuyTokenPage() {
+export default function BuyTokenSection() {
     const connectedWallet = useConnectedWallet();
     const { safeSignAndSubmitTransaction } = useSafeWallet();
     const [tokens, setTokens] = useState<TokenInfo[]>([]);
