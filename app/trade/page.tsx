@@ -1,432 +1,260 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { useToast } from "@/hooks/use-toast";
 import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
-import { useUnifiedWallet } from "@/hooks/wallet/useUnifiedWallet";
 import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-import { toast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Breadcrumb from "@/components/ui/breadcrumb";
 
+// Contract constants
 const CONTRACT_ADDRESS = "0x7d263f6b2532fbde3fde3a11ce687eb0288fcbf09387ed1b6eeb81b01d86c0eb";
 const MODULE_NAME = "fa_factory";
 
+interface TokenInfo {
+    symbol: string;
+    name: string;
+    description: string;
+    decimals: number;
+    iconUrl: string;
+    projectUrl: string;
+    totalSupply: string;
+    maxSupply: string;
+    buyFee: number;
+    creator: string;
+    tokenAddress: string;
+}
+
 export default function TradePage() {
-    const aptosWallet = useWallet();
-    const safeWallet = useSafeWallet();
+    const { toast } = useToast();
     const connectedWallet = useConnectedWallet();
-    const unifiedWallet = useUnifiedWallet();
-    const [buyForm, setBuyForm] = useState({
-        tokenSymbol: "",
-        amount: "",
+    const { safeSignAndSubmitTransaction } = useSafeWallet();
+
+    const [tokens, setTokens] = useState<TokenInfo[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [mintingToken, setMintingToken] = useState<string | null>(null);
+    const [mintAmounts, setMintAmounts] = useState<{ [key: string]: string }>({});
+
+    // Initialize Aptos client
+    const aptosConfig = new AptosConfig({
+        network: Network.TESTNET,
+        clientConfig: {
+            API_KEY: "AG-9W2L7VUVYZ8VCUMYY8VMRVMICKYNYC68H"
+        }
     });
-    const [sellForm, setSellForm] = useState({
-        tokenSymbol: "",
-        amount: "",
-    });
-    const [isLoading, setIsLoading] = useState(false);
+    const aptos = new Aptos(aptosConfig);
 
-    const config = new AptosConfig({ network: Network.TESTNET });
-    const aptos = new Aptos(config);
+    // Load tokens on component mount
+    useEffect(() => {
+        loadTokens();
+    }, []);
 
-    const handleBuySubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        console.log("Debug wallet state:", {
-            aptosWalletConnected: aptosWallet.connected,
-            aptosWalletAccount: aptosWallet.account,
-            connectedWalletConnected: connectedWallet.connected,
-            connectedWalletAccount: connectedWallet.account,
-            hasSignFunction: !!aptosWallet.signAndSubmitTransaction,
+    // Debug wallet state
+    useEffect(() => {
+        console.log("Wallet state:", {
+            connected: connectedWallet.connected,
+            account: connectedWallet.account?.address,
             isAuthenticated: connectedWallet.isAuthenticated,
-            availableWallets: aptosWallet.wallets?.map(w => ({ name: w.name, readyState: w.readyState }))
+            user: connectedWallet.user
         });
+    }, [connectedWallet]);
 
-        // Check if user is authenticated first
-        if (!connectedWallet.isAuthenticated) {
-            toast({
-                title: "Authentication required",
-                description: "Please login first before making transactions.",
-                variant: "destructive",
-            });
-            return;
-        }
+    const loadTokens = async () => {
+        try {
+            setLoading(true);
 
-        // IMPORTANT: We need the actual Aptos wallet to be connected for signing transactions
-        if (!aptosWallet.connected || !aptosWallet.account || !aptosWallet.signAndSubmitTransaction) {
-            console.log("Aptos wallet not properly connected, attempting to connect...");
-
-            toast({
-                title: "Connecting Aptos wallet",
-                description: "Connecting your Aptos wallet for transaction signing...",
+            // Get all TokenCreated events from the contract
+            const events = await aptos.getModuleEventsByEventType({
+                eventType: `${CONTRACT_ADDRESS}::${MODULE_NAME}::TokenCreated`,
+                minimumLedgerVersion: 0,
             });
 
-            try {
-                // Try to connect to the first available wallet (usually Petra if installed)
-                if (aptosWallet.wallets && aptosWallet.wallets.length > 0) {
-                    const petraWallet = aptosWallet.wallets.find(w => w.name === "Petra") || aptosWallet.wallets[0];
-                    console.log("Trying to connect to:", petraWallet.name, "State:", petraWallet.readyState);
+            console.log("Token events:", events);
 
-                    if (petraWallet.readyState !== "Installed") {
-                        toast({
-                            title: "Wallet not installed",
-                            description: "Please install Petra wallet or another Aptos wallet to make transactions.",
-                            variant: "destructive",
-                        });
-                        return;
+            const tokenInfos: TokenInfo[] = [];
+
+            for (const event of events) {
+                try {
+                    const eventData = event.data as any;
+
+                    // Validate required fields
+                    if (!eventData.symbol || !eventData.name || !eventData.token_address) {
+                        console.warn("Skipping incomplete token event:", eventData);
+                        continue;
                     }
 
-                    await aptosWallet.connect(petraWallet.name);
-                    console.log("Connected successfully!");
-
-                    // Wait a bit for the connection to be established
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-
-                    // Re-check connection state
-                    console.log("After connection - wallet state:", {
-                        connected: aptosWallet.connected,
-                        account: aptosWallet.account,
-                        hasSignFunction: !!aptosWallet.signAndSubmitTransaction
-                    });
-
-                    // Check if connection was successful
-                    if (!aptosWallet.connected || !aptosWallet.account) {
-                        throw new Error("Connection was not established properly");
-                    }
-                } else {
-                    console.log("No wallets available");
-                    toast({
-                        title: "No wallet found",
-                        description: "Please install Petra wallet or another Aptos wallet to make transactions.",
-                        variant: "destructive",
-                    });
-                    return;
+                    const tokenInfo: TokenInfo = {
+                        symbol: eventData.symbol || "UNKNOWN",
+                        name: eventData.name || "Unknown Token",
+                        description: eventData.description || "No description available",
+                        decimals: parseInt(eventData.decimals) || 6,
+                        iconUrl: eventData.icon_url || "",
+                        projectUrl: eventData.project_url || "",
+                        totalSupply: eventData.total_supply || "0",
+                        maxSupply: eventData.max_supply || "0",
+                        buyFee: parseInt(eventData.buy_fee) || 0,
+                        creator: eventData.creator || "",
+                        tokenAddress: eventData.token_address,
+                    };
+                    tokenInfos.push(tokenInfo);
+                } catch (err) {
+                    console.error("Error parsing token event:", err);
                 }
-            } catch (error: any) {
-                console.error("Auto-connect failed:", error);
-                toast({
-                    title: "Wallet connection failed",
-                    description: error.message || "Please manually connect your Aptos wallet using the wallet button in the header and try again.",
-                    variant: "destructive",
-                });
-                return;
             }
-        }
 
-        // Final check - make sure we have everything needed for transaction
-        if (!aptosWallet.connected || !aptosWallet.account || !aptosWallet.signAndSubmitTransaction) {
+            setTokens(tokenInfos);
+            console.log("Loaded tokens:", tokenInfos);
+        } catch (error) {
+            console.error("Error loading tokens:", error);
             toast({
-                title: "Wallet connection required",
-                description: "Unable to connect to Aptos wallet. Please manually connect using the wallet button in the header.",
+                title: "Error",
+                description: "Failed to load tokens. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleMintTokens = async (tokenSymbol: string, tokenAddress: string, isCreator: boolean = false) => {
+        if (!connectedWallet.connected || !connectedWallet.account) {
+            toast({
+                title: "Wallet not connected",
+                description: "Please connect your wallet to mint tokens.",
                 variant: "destructive",
             });
             return;
         }
 
-        // Additional safety check for wallet state
-        if (typeof aptosWallet.signAndSubmitTransaction !== 'function') {
+        const amount = mintAmounts[tokenSymbol];
+        if (!amount || parseFloat(amount) <= 0) {
             toast({
-                title: "Wallet function error",
-                description: "Wallet signing function is not available. Please disconnect and reconnect your wallet.",
+                title: "Invalid amount",
+                description: "Please enter a valid amount to mint.",
                 variant: "destructive",
             });
             return;
         }
-
-        if (!buyForm.tokenSymbol || !buyForm.amount) {
-            toast({
-                title: "Missing fields",
-                description: "Please fill in all required fields.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setIsLoading(true);
 
         try {
-            // Additional safety check
-            if (!aptosWallet.signAndSubmitTransaction) {
-                throw new Error("Wallet does not support transaction signing");
+            setMintingToken(tokenSymbol);
+
+            // Find token info to get decimals
+            const tokenInfo = tokens.find(t => t.symbol === tokenSymbol);
+            if (!tokenInfo) {
+                throw new Error("Token not found");
             }
 
-            const entryFunctionPayload = {
-                type: "entry_function_payload",
-                function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
-                type_arguments: [],
-                arguments: [
-                    buyForm.tokenSymbol, // string: symbol
-                    buyForm.amount, // u64: amount
-                ],
-            } as any;
+            // Convert amount to proper decimals
+            const amountWithDecimals = Math.floor(parseFloat(amount) * Math.pow(10, tokenInfo.decimals));
 
-            console.log("Submitting transaction with payload:", entryFunctionPayload);            // Check if signAndSubmitTransaction function exists
-            if (!aptosWallet.signAndSubmitTransaction) {
-                throw new Error("Wallet does not support transaction signing. Please try reconnecting your wallet.");
+            let payload;
+            let actionType;
+
+            // Check if current user is the creator
+            const userAddress = connectedWallet.account.address.toString();
+            const isTokenCreator = tokenInfo.creator.toLowerCase() === userAddress.toLowerCase();
+
+            if (isTokenCreator) {
+                // Creator can mint tokens directly without paying fees
+                payload = {
+                    type: "entry_function_payload",
+                    function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::mint`,
+                    type_arguments: [],
+                    arguments: [tokenAddress, amountWithDecimals.toString()],
+                };
+                actionType = "Mint";
+            } else {
+                // Non-creators must buy tokens (includes fees)
+                // Convert symbol to vector<u8> to match contract ABI
+                const symbolBytes = Array.from(new TextEncoder().encode(tokenSymbol));
+
+                payload = {
+                    type: "entry_function_payload",
+                    function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
+                    type_arguments: [],
+                    arguments: [symbolBytes, amountWithDecimals.toString()],
+                };
+                actionType = "Buy";
             }
 
-            // Use safe wallet wrapper instead of direct wallet calls
-            console.log("=== BUY TRANSACTION DEBUG ===");
-            console.log("CONTRACT_ADDRESS:", CONTRACT_ADDRESS);
-            console.log("MODULE_NAME:", MODULE_NAME);
-            console.log("buyForm:", buyForm);
-            console.log("Payload để gửi:", entryFunctionPayload);
+            console.log(`${actionType} tokens with payload:`, payload);
 
-            // Validate payload before sending
-            if (!entryFunctionPayload.function) {
-                throw new Error("Function field is missing in payload");
-            }
-
-            console.log("Using safe wallet for buy transaction");
-            const response = await safeWallet.safeSignAndSubmitTransaction(entryFunctionPayload);
-
+            const response = await safeSignAndSubmitTransaction(payload as any);
             console.log("Transaction response:", response);
 
-            if (response?.hash) {
-                toast({
-                    title: "Buy Order Successful!",
-                    description: (
-                        <div className="space-y-2">
-                            <p>You bought {buyForm.amount} {buyForm.tokenSymbol} tokens.</p>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        window.open(
-                                            `https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`,
-                                            "_blank"
-                                        );
-                                    }}
-                                >
-                                    View on Explorer
-                                </Button>
-                            </div>
-                        </div>
-                    ),
-                });
+            // Wait for transaction confirmation
+            await aptos.waitForTransaction({
+                transactionHash: response.hash,
+            });
 
-                setBuyForm({ tokenSymbol: "", amount: "" });
-            } else {
-                throw new Error("Transaction failed - no hash received");
-            }
-        } catch (error: any) {
-            console.error("Buy error:", error);
             toast({
-                title: "Failed to buy tokens",
-                description: error.message || "An error occurred while buying tokens. Make sure your wallet is properly connected.",
+                title: `Tokens ${actionType === "Mint" ? "Minted" : "Purchased"}!`,
+                description: (
+                    <div className="space-y-2">
+                        <p>Successfully {actionType === "Mint" ? "minted" : "purchased"} {amount} {tokenSymbol} tokens!</p>
+                        {actionType === "Buy" && (
+                            <p className="text-xs text-muted-foreground">
+                                Fee included: {(tokenInfo.buyFee / 100)}%
+                            </p>
+                        )}
+                        <a
+                            href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline text-sm"
+                        >
+                            View transaction on explorer →
+                        </a>
+                    </div>
+                ),
+            });
+
+            // Clear the mint amount for this token
+            setMintAmounts(prev => ({ ...prev, [tokenSymbol]: "" }));
+
+        } catch (error: any) {
+            console.error("Error processing tokens:", error);
+            toast({
+                title: "Transaction Failed",
+                description: error.message || "Failed to process tokens. Please try again.",
                 variant: "destructive",
             });
         } finally {
-            setIsLoading(false);
+            setMintingToken(null);
         }
     };
 
-    const handleSellSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleAmountChange = (tokenSymbol: string, amount: string) => {
+        setMintAmounts(prev => ({ ...prev, [tokenSymbol]: amount }));
+    };
 
-        console.log("Debug wallet state for sell:", {
-            aptosWalletConnected: aptosWallet.connected,
-            aptosWalletAccount: aptosWallet.account,
-            hasSignFunction: !!aptosWallet.signAndSubmitTransaction,
-            isAuthenticated: connectedWallet.isAuthenticated,
-        });
-
-        // Check if user is authenticated first
-        if (!connectedWallet.isAuthenticated) {
-            toast({
-                title: "Authentication required",
-                description: "Please login first before making transactions.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        // IMPORTANT: We need the actual Aptos wallet to be connected for signing transactions
-        if (!aptosWallet.connected || !aptosWallet.account || !aptosWallet.signAndSubmitTransaction) {
-            console.log("Aptos wallet not properly connected for sell...");
-
-            toast({
-                title: "Connecting Aptos wallet",
-                description: "Connecting your Aptos wallet for transaction signing...",
-            });
-
-            try {
-                if (aptosWallet.wallets && aptosWallet.wallets.length > 0) {
-                    const petraWallet = aptosWallet.wallets.find(w => w.name === "Petra") || aptosWallet.wallets[0];
-                    console.log("Trying to connect to:", petraWallet.name, "State:", petraWallet.readyState);
-
-                    if (petraWallet.readyState !== "Installed") {
-                        toast({
-                            title: "Wallet not installed",
-                            description: "Please install Petra wallet or another Aptos wallet to make transactions.",
-                            variant: "destructive",
-                        });
-                        return;
-                    }
-
-                    await aptosWallet.connect(petraWallet.name);
-                    console.log("Connected successfully for sell!");
-
-                    // Wait a bit for the connection to be established
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-
-                    // Check if connection was successful
-                    if (!aptosWallet.connected || !aptosWallet.account) {
-                        throw new Error("Connection was not established properly");
-                    }
-                } else {
-                    toast({
-                        title: "No wallet found",
-                        description: "Please install Petra wallet or another Aptos wallet to make transactions.",
-                        variant: "destructive",
-                    });
-                    return;
-                }
-            } catch (error: any) {
-                console.error("Auto-connect failed for sell:", error);
-                toast({
-                    title: "Wallet connection failed",
-                    description: error.message || "Please manually connect your Aptos wallet using the wallet button in the header and try again.",
-                    variant: "destructive",
-                });
-                return;
-            }
-        }
-
-        // Final check - make sure we have everything needed for transaction
-        if (!aptosWallet.connected || !aptosWallet.account || !aptosWallet.signAndSubmitTransaction) {
-            toast({
-                title: "Wallet connection required",
-                description: "Unable to connect to Aptos wallet. Please manually connect using the wallet button in the header.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        // Additional safety check for wallet state
-        if (typeof aptosWallet.signAndSubmitTransaction !== 'function') {
-            toast({
-                title: "Wallet function error",
-                description: "Wallet signing function is not available. Please disconnect and reconnect your wallet.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        if (!sellForm.tokenSymbol || !sellForm.amount) {
-            toast({
-                title: "Missing fields",
-                description: "Please fill in all required fields.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setIsLoading(true);
-
+    const formatNumber = (value: string, decimals: number) => {
         try {
-            // Additional safety check
-            if (!aptosWallet.signAndSubmitTransaction) {
-                throw new Error("Wallet does not support transaction signing");
+            if (!value || value === "0" || value === "") {
+                return "0";
             }
-
-            const entryFunctionPayload = {
-                type: "entry_function_payload",
-                function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::sell_tokens`,
-                type_arguments: [],
-                arguments: [
-                    sellForm.tokenSymbol, // string: symbol
-                    sellForm.amount, // u64: amount
-                ],
-            } as any;
-
-            console.log("Submitting sell transaction with payload:", entryFunctionPayload);            // Check if signAndSubmitTransaction function exists
-            if (!aptosWallet.signAndSubmitTransaction) {
-                throw new Error("Wallet does not support transaction signing. Please try reconnecting your wallet.");
+            const num = parseFloat(value) / Math.pow(10, decimals);
+            if (isNaN(num)) {
+                return "0";
             }
-
-            // Use safe wallet wrapper for sell transaction
-            console.log("=== SELL TRANSACTION DEBUG ===");
-            console.log("CONTRACT_ADDRESS:", CONTRACT_ADDRESS);
-            console.log("MODULE_NAME:", MODULE_NAME);
-            console.log("sellForm:", sellForm);
-            console.log("Payload để gửi:", entryFunctionPayload);
-
-            // Validate payload before sending
-            if (!entryFunctionPayload.function) {
-                throw new Error("Function field is missing in payload");
-            }
-
-            console.log("Using safe wallet for sell transaction");
-            const response = await safeWallet.safeSignAndSubmitTransaction(entryFunctionPayload);
-
-            console.log("Sell transaction response:", response);
-
-            if (response?.hash) {
-                toast({
-                    title: "Sell Order Successful!",
-                    description: (
-                        <div className="space-y-2">
-                            <p>You sold {sellForm.amount} {sellForm.tokenSymbol} tokens.</p>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        window.open(
-                                            `https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`,
-                                            "_blank"
-                                        );
-                                    }}
-                                >
-                                    View on Explorer
-                                </Button>
-                            </div>
-                        </div>
-                    ),
-                });
-
-                setSellForm({ tokenSymbol: "", amount: "" });
-            } else {
-                throw new Error("Transaction failed - no hash received");
-            }
-        } catch (error: any) {
-            console.error("Sell error:", error);
-            toast({
-                title: "Failed to sell tokens",
-                description: error.message || "An error occurred while selling tokens. Make sure your wallet is properly connected.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
+            return num.toLocaleString();
+        } catch {
+            return "0";
         }
     };
 
-    if (!connectedWallet.connected) {
+    if (loading) {
         return (
             <div className="container mx-auto px-4 py-8">
-                <div className="max-w-2xl mx-auto text-center">
-                    <h1 className="text-3xl font-bold mb-4">Trade Tokens</h1>
-                    <Card className="p-8">
-                        <p className="text-lg mb-4">Please connect your wallet to start trading</p>
-                        <p className="text-sm text-muted-foreground">
-                            You need to connect your Aptos wallet to access trading features.
-                        </p>
-                        {connectedWallet.isAuthenticated && connectedWallet.user && (
-                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    You are logged in but need to connect your Aptos wallet for transactions.
-                                </p>
-                            </div>
-                        )}
-                    </Card>
+                <div className="max-w-6xl mx-auto">
+                    <h1 className="text-3xl font-bold mb-8">Token Marketplace</h1>
+                    <div className="flex items-center justify-center h-64">
+                        <div className="text-lg">Loading tokens...</div>
+                    </div>
                 </div>
             </div>
         );
@@ -434,290 +262,203 @@ export default function TradePage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <Breadcrumb
-                items={[
-                    { label: "Trade", isCurrentPage: true }
-                ]}
-                className="mb-6"
-            />
-            <div className="max-w-2xl mx-auto">                <h1 className="text-3xl font-bold mb-8 text-center">Trade Tokens</h1>
+            <div className="max-w-6xl mx-auto">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold mb-2">Token Marketplace</h1>
+                    <p className="text-muted-foreground">
+                        Browse and mint tokens created on the platform
+                    </p>
+                </div>
 
-                {/* Show wallet connection status */}
-                {connectedWallet.isAuthenticated && !aptosWallet.connected && (
-                    <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-                        <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                            <div>
-                                <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                                    Wallet Connection Required
-                                </p>                                    <p className="text-xs text-orange-600 dark:text-orange-300">
-                                    You're logged in, but need to connect your Aptos wallet for transactions.
+                {!connectedWallet.connected || !connectedWallet.account ? (
+                    <Card className="mb-8">
+                        <CardContent className="pt-6">
+                            <div className="text-center">
+                                <h3 className="text-lg font-semibold mb-2">Connect Your Wallet</h3>
+                                <p className="text-muted-foreground">
+                                    Please connect your wallet to mint tokens.
                                 </p>
-                                <button
-                                    onClick={async () => {
-                                        try {
-                                            await unifiedWallet.connectUnified("Petra");
-                                        } catch (error: any) {
-                                            toast({
-                                                title: "Connection failed",
-                                                description: error.message || "Failed to connect wallet",
-                                                variant: "destructive",
-                                            });
-                                        }
-                                    }}
-                                    className="mt-2 px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-xs rounded transition-colors"
-                                >
-                                    Connect Aptos Wallet
-                                </button>                                {/* Debug button to check authentication state */}
-                                <button
-                                    onClick={() => {
-                                        console.log("=== DEBUG AUTH STATE ===");
-                                        console.log("localStorage tokens:", {
-                                            accessToken: localStorage.getItem("accessToken"),
-                                            refreshToken: localStorage.getItem("refreshToken")
-                                        });
-                                        console.log("Auth context:", {
-                                            isAuthenticated: connectedWallet.isAuthenticated,
-                                            user: connectedWallet.user
-                                        });
-                                        console.log("Aptos wallet:", {
-                                            connected: aptosWallet.connected,
-                                            account: aptosWallet.account,
-                                            signFunction: typeof aptosWallet.signAndSubmitTransaction,
-                                            wallet: aptosWallet.wallet
-                                        });
-
-                                        // Try to verify wallet state
-                                        if (aptosWallet.signAndSubmitTransaction && typeof aptosWallet.signAndSubmitTransaction === 'function') {
-                                            console.log("✅ Wallet signing function is available");
-                                        } else {
-                                            console.log("❌ Wallet signing function is NOT available");
-                                        }
-                                    }}
-                                    className="ml-2 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded"
-                                >
-                                    Debug Auth
-                                </button>                                {/* Wallet verification button */}
-                                <button
-                                    onClick={async () => {
-                                        try {
-                                            if (!aptosWallet.connected) {
-                                                toast({
-                                                    title: "Wallet not connected",
-                                                    description: "Please connect your wallet first.",
-                                                    variant: "destructive",
-                                                });
-                                                return;
-                                            }
-
-                                            if (!aptosWallet.signAndSubmitTransaction) {
-                                                toast({
-                                                    title: "Wallet function missing",
-                                                    description: "Signing function not available. Try reconnecting.",
-                                                    variant: "destructive",
-                                                });
-                                                return;
-                                            }
-
-                                            // Test payload creation
-                                            const testPayload = {
-                                                type: "entry_function_payload",
-                                                function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
-                                                type_arguments: [],
-                                                arguments: ["TEST", "1"],
-                                            };
-
-                                            console.log("Test payload:", testPayload);
-
-                                            toast({
-                                                title: "Wallet verified",
-                                                description: "Wallet is ready for transactions.",
-                                            });
-                                        } catch (error: any) {
-                                            console.error("Wallet verification failed:", error);
-                                            toast({
-                                                title: "Wallet verification failed",
-                                                description: error.message || "Please reconnect your wallet.",
-                                                variant: "destructive",
-                                            });
-                                        }
-                                    }}
-                                    className="ml-2 px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded"
-                                >
-                                    Verify Wallet
-                                </button>
-
-                                {/* Test Payload button */}
-                                <button
-                                    onClick={() => {
-                                        const testPayload = {
-                                            type: "entry_function_payload",
-                                            function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
-                                            type_arguments: [],
-                                            arguments: [buyForm.tokenSymbol || "TEST", buyForm.amount || "1"],
-                                        };
-
-                                        console.log("=== PAYLOAD TEST ===");
-                                        console.log("Contract Address:", CONTRACT_ADDRESS);
-                                        console.log("Module Name:", MODULE_NAME);
-                                        console.log("Function:", testPayload.function);
-                                        console.log("Full Payload:", testPayload);
-
-                                        // Validate format
-                                        const parts = testPayload.function.split("::");
-                                        if (parts.length === 3) {
-                                            console.log("✅ Function format is valid");
-                                        } else {
-                                            console.log("❌ Function format is invalid");
-                                        }
-
-                                        toast({
-                                            title: "Payload Test",
-                                            description: "Check console for payload details",
-                                        });
-                                    }}
-                                    className="ml-2 px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded"
-                                >
-                                    Test Payload
-                                </button>
+                                {!connectedWallet.connected && (
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        Status: Wallet not connected
+                                    </p>
+                                )}
+                                {connectedWallet.connected && !connectedWallet.account && (
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        Status: No account found
+                                    </p>
+                                )}
                             </div>
-                        </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card className="mb-8">
+                        <CardContent className="pt-6">
+                            <div className="text-center">
+                                <h3 className="text-lg font-semibold mb-2 text-green-600">Wallet Connected</h3>
+                                <p className="text-muted-foreground">
+                                    Connected to: {connectedWallet.account?.address?.toString().slice(0, 6)}...{connectedWallet.account?.address?.toString().slice(-4)}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {tokens.length === 0 ? (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="text-center">
+                                <h3 className="text-lg font-semibold mb-2">No Tokens Found</h3>
+                                <p className="text-muted-foreground mb-4">
+                                    There are no tokens available for trading yet.
+                                </p>
+                                <Button onClick={loadTokens}>Refresh</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {tokens.map((token, index) => (
+                            <Card key={`${token.tokenAddress}-${index}`} className="flex flex-col">
+                                <CardHeader>
+                                    <div className="flex items-start gap-3">
+                                        {token.iconUrl && (
+                                            <img
+                                                src={token.iconUrl}
+                                                alt={token.name}
+                                                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <CardTitle className="text-lg truncate">{token.name}</CardTitle>
+                                            <CardDescription className="font-mono text-sm">
+                                                ${token.symbol}
+                                            </CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+
+                                <CardContent className="flex-1">
+                                    <div className="space-y-3">
+                                        <p className="text-sm text-muted-foreground line-clamp-2">
+                                            {token.description}
+                                        </p>
+
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                            <div>
+                                                <span className="text-muted-foreground">Total Supply:</span>
+                                                <p className="font-mono">
+                                                    {formatNumber(token.totalSupply, token.decimals)}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground">Max Supply:</span>
+                                                <p className="font-mono">
+                                                    {formatNumber(token.maxSupply, token.decimals)}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground">Buy Fee:</span>
+                                                <p className="font-mono">
+                                                    {isNaN(token.buyFee) ? "0" : (token.buyFee / 100)}%
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground">Decimals:</span>
+                                                <p className="font-mono">{token.decimals}</p>
+                                            </div>
+                                        </div>
+
+                                        {token.projectUrl && (
+                                            <a
+                                                href={token.projectUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-blue-500 hover:underline block truncate"
+                                            >
+                                                Project Website →
+                                            </a>
+                                        )}
+                                    </div>
+                                </CardContent>
+
+                                <div className="px-6 pb-6">
+                                    <div className="space-y-3">
+                                        {/* Show creator info */}
+                                        <div className="text-xs text-muted-foreground">
+                                            <p>Creator: {token.creator.slice(0, 6)}...{token.creator.slice(-4)}</p>
+                                            {connectedWallet.account &&
+                                                token.creator.toLowerCase() === connectedWallet.account.address.toString().toLowerCase() && (
+                                                    <p className="text-green-600 font-medium">
+                                                        ✓ You are the creator - mint without fees
+                                                    </p>
+                                                )}
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor={`amount-${token.symbol}`} className="text-sm">
+                                                {connectedWallet.account &&
+                                                    token.creator.toLowerCase() === connectedWallet.account.address.toString().toLowerCase()
+                                                    ? "Amount to Mint (Free)"
+                                                    : `Amount to Buy (${(token.buyFee / 100)}% fee)`}
+                                            </Label>
+                                            <Input
+                                                id={`amount-${token.symbol}`}
+                                                type="number"
+                                                step="0.000001"
+                                                min="0"
+                                                placeholder="0.0"
+                                                value={mintAmounts[token.symbol] || ""}
+                                                onChange={(e) => handleAmountChange(token.symbol, e.target.value)}
+                                                disabled={!connectedWallet.connected || !connectedWallet.account || mintingToken === token.symbol}
+                                            />
+                                        </div>
+
+                                        <Button
+                                            onClick={() => handleMintTokens(token.symbol, token.tokenAddress)}
+                                            disabled={
+                                                !connectedWallet.connected ||
+                                                !connectedWallet.account ||
+                                                mintingToken === token.symbol ||
+                                                !mintAmounts[token.symbol] ||
+                                                parseFloat(mintAmounts[token.symbol] || "0") <= 0
+                                            }
+                                            className="w-full"
+                                        >
+                                            {mintingToken === token.symbol ? (
+                                                "Processing..."
+                                            ) : !connectedWallet.connected || !connectedWallet.account ? (
+                                                "Connect Wallet"
+                                            ) : connectedWallet.account &&
+                                                token.creator.toLowerCase() === connectedWallet.account.address.toString().toLowerCase() ? (
+                                                `Mint ${token.symbol} (Free)`
+                                            ) : (
+                                                `Buy ${token.symbol} (${(token.buyFee / 100)}% fee)`
+                                            )}
+                                        </Button>
+
+                                        {/* Token address for reference */}
+                                        <div className="text-xs text-muted-foreground">
+                                            <p className="truncate">Token: {token.tokenAddress}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
                     </div>
                 )}
 
-                {/* Connection Status Indicator */}
-                <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${unifiedWallet.status.authConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                <span className="text-sm font-medium">
-                                    App Login: {unifiedWallet.status.authConnected ? 'Connected' : 'Not Connected'}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${unifiedWallet.status.aptosConnected ? 'bg-green-500' : 'bg-orange-500'}`}></div>
-                                <span className="text-sm font-medium">
-                                    Aptos Wallet: {unifiedWallet.status.aptosConnected ? 'Connected' : 'Not Connected'}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${unifiedWallet.status.readyForTransactions ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                                <span className="text-sm font-medium">
-                                    Ready for Transactions: {unifiedWallet.status.readyForTransactions ? 'Yes' : 'No'}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                            {aptosWallet.connected && aptosWallet.account ? (
-                                `${aptosWallet.account.address.toString().slice(0, 6)}...${aptosWallet.account.address.toString().slice(-4)}`
-                            ) : connectedWallet.isAuthenticated && connectedWallet.account ? (
-                                typeof connectedWallet.account.address === 'string' ?
-                                    `${connectedWallet.account.address.slice(0, 6)}...${connectedWallet.account.address.slice(-4)}` :
-                                    `${connectedWallet.account.address.toString().slice(0, 6)}...${connectedWallet.account.address.toString().slice(-4)}`
-                            ) : (
-                                'No wallet connected'
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <Tabs defaultValue="buy" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="buy">Buy Tokens</TabsTrigger>
-                        <TabsTrigger value="sell">Sell Tokens</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="buy">
-                        <Card className="p-6">
-                            <form onSubmit={handleBuySubmit} className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="buyTokenSymbol">Token Symbol *</Label>
-                                    <Input
-                                        id="buyTokenSymbol"
-                                        placeholder="e.g., LOU1S"
-                                        value={buyForm.tokenSymbol}
-                                        onChange={(e) => setBuyForm(prev => ({ ...prev, tokenSymbol: e.target.value }))}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="buyAmount">Amount (in smallest units) *</Label>
-                                    <Input
-                                        id="buyAmount"
-                                        placeholder="e.g., 100000000"
-                                        value={buyForm.amount}
-                                        onChange={(e) => setBuyForm(prev => ({ ...prev, amount: e.target.value }))}
-                                        required
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Enter amount in the token's smallest units (considering decimals)
-                                    </p>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="w-full bg-green-600 hover:bg-green-700"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? "Buying..." : "Buy Tokens"}
-                                </Button>
-                            </form>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="sell">
-                        <Card className="p-6">
-                            <form onSubmit={handleSellSubmit} className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="sellTokenSymbol">Token Symbol *</Label>
-                                    <Input
-                                        id="sellTokenSymbol"
-                                        placeholder="e.g., LOU1S"
-                                        value={sellForm.tokenSymbol}
-                                        onChange={(e) => setSellForm(prev => ({ ...prev, tokenSymbol: e.target.value }))}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="sellAmount">Amount (in smallest units) *</Label>
-                                    <Input
-                                        id="sellAmount"
-                                        placeholder="e.g., 1000"
-                                        value={sellForm.amount}
-                                        onChange={(e) => setSellForm(prev => ({ ...prev, amount: e.target.value }))}
-                                        required
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Enter amount in the token's smallest units (considering decimals)
-                                    </p>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="w-full bg-red-600 hover:bg-red-700"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? "Selling..." : "Sell Tokens"}
-                                </Button>
-                            </form>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-
-                <div className="mt-8 p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold mb-2">Trading Information</h3>
-                    <p className="text-sm text-muted-foreground mb-1">
-                        Contract: {CONTRACT_ADDRESS}
-                    </p>
-                    <p className="text-sm text-muted-foreground mb-1">
-                        Network: Testnet
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        Make sure you have sufficient APT for transaction fees
-                    </p>
+                <div className="mt-8 text-center">
+                    <Button
+                        variant="outline"
+                        onClick={loadTokens}
+                        disabled={loading}
+                    >
+                        {loading ? "Loading..." : "Refresh Tokens"}
+                    </Button>
                 </div>
             </div>
         </div>

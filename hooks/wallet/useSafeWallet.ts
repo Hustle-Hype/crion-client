@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet as useAptosWallet } from "@aptos-labs/wallet-adapter-react";
+import { useConnectedWallet } from "./useConnectedWallet";
 import { toast } from "../use-toast";
 
 // Utility function to validate transaction payload
@@ -55,6 +56,7 @@ const validateTransactionPayload = (payload: any): string[] => {
 
 export function useSafeWallet() {
   const aptosWallet = useAptosWallet();
+  const connectedWallet = useConnectedWallet();
 
   // Fallback method using direct wallet interaction
   const fallbackSignAndSubmitTransaction = async (payload: any) => {
@@ -72,8 +74,16 @@ export function useSafeWallet() {
           throw new Error("Wallet not connected via direct API");
         }
 
-        // Use the direct wallet API
-        const result = await wallet.signAndSubmitTransaction(payload);
+        // Try new format first, then fallback to old format
+        let result;
+        try {
+          console.log("Safe wallet: Trying new format { payload }");
+          result = await wallet.signAndSubmitTransaction({ payload });
+        } catch (newFormatError: any) {
+          console.log("Safe wallet: New format failed, trying legacy format");
+          result = await wallet.signAndSubmitTransaction(payload);
+        }
+
         console.log("Safe wallet: Fallback transaction successful", result);
         return result;
       } else {
@@ -103,20 +113,63 @@ export function useSafeWallet() {
       console.log("Safe wallet: Payload validation passed ✅");
 
       // Pre-checks for wallet state
-      if (!aptosWallet.connected) {
+      if (!connectedWallet.connected) {
         throw new Error("Wallet is not connected");
       }
 
-      if (!aptosWallet.account) {
+      if (!connectedWallet.account) {
         throw new Error("No wallet account found");
       }
 
-      if (!aptosWallet.signAndSubmitTransaction) {
-        throw new Error("Wallet does not support transaction signing");
+      // TỰ ĐỘNG KẾT NỐI APTOS WALLET NẾU CẦN
+      if (
+        connectedWallet.isAuthenticated &&
+        (!aptosWallet.connected || !aptosWallet.signAndSubmitTransaction)
+      ) {
+        console.log(
+          "Safe wallet: Auto-connecting Aptos wallet for transaction..."
+        );
+
+        try {
+          const availableWallets = aptosWallet.wallets || [];
+          const petraWallet = availableWallets.find(
+            (w: any) => w.name === "Petra" && w.readyState === "Installed"
+          );
+
+          if (petraWallet && !aptosWallet.connected) {
+            console.log("Safe wallet: Connecting to Petra wallet...");
+            await aptosWallet.connect(petraWallet.name);
+
+            // Đợi để đảm bảo kết nối hoàn thành
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            if (
+              !aptosWallet.connected ||
+              !aptosWallet.signAndSubmitTransaction
+            ) {
+              throw new Error("Failed to establish Aptos wallet connection");
+            }
+
+            console.log("Safe wallet: Aptos wallet connected successfully");
+
+            toast({
+              title: "Wallet connected",
+              description:
+                "Aptos wallet connected automatically for transaction.",
+            });
+          }
+        } catch (connectError: any) {
+          console.warn("Safe wallet: Auto-connect failed:", connectError);
+          // Tiếp tục với fallback method
+        }
       }
 
-      if (typeof aptosWallet.signAndSubmitTransaction !== "function") {
-        throw new Error("Transaction signing function is not valid");
+      // Check if we have a signing method (either direct wallet or authenticated user)
+      const hasSigningMethod =
+        aptosWallet.signAndSubmitTransaction || connectedWallet.isAuthenticated;
+
+      if (!hasSigningMethod) {
+        throw new Error("No transaction signing method available");
       }
 
       console.log("Safe wallet: Pre-transaction checks passed");
@@ -135,33 +188,59 @@ export function useSafeWallet() {
           );
 
           // Additional safety checks before each attempt
-          if (!aptosWallet.connected || !aptosWallet.account) {
+          if (!connectedWallet.connected || !connectedWallet.account) {
             throw new Error("Wallet disconnected during transaction");
           }
 
-          // Extra deep check for signAndSubmitTransaction function
-          const signFunction = aptosWallet.signAndSubmitTransaction;
-          if (!signFunction || typeof signFunction !== "function") {
-            throw new Error("Signing function became unavailable");
-          }
+          let result;
 
-          // Wrap in Promise.race with timeout to prevent hanging
-          const timeoutMs = 30000; // 30 seconds timeout
-          const transactionPromise = signFunction.call(aptosWallet, payload);
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(
-              () => reject(new Error("Transaction timeout")),
-              timeoutMs
+          // Try direct Aptos wallet first if available
+          if (
+            aptosWallet.signAndSubmitTransaction &&
+            typeof aptosWallet.signAndSubmitTransaction === "function"
+          ) {
+            console.log("Safe wallet: Using direct Aptos wallet method");
+            const signFunction = aptosWallet.signAndSubmitTransaction;
+
+            // Wrap in Promise.race with timeout to prevent hanging
+            const timeoutMs = 30000; // 30 seconds timeout
+
+            // Try new format first, then fallback to old format
+            let transactionPromise;
+            try {
+              console.log(
+                "Safe wallet: Calling signAndSubmitTransaction with new format { payload }..."
+              );
+              transactionPromise = (signFunction as any).call(aptosWallet, {
+                payload,
+              });
+            } catch (newFormatError: any) {
+              console.log(
+                "Safe wallet: New format failed, trying legacy format"
+              );
+              transactionPromise = (signFunction as any).call(
+                aptosWallet,
+                payload
+              );
+            }
+
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(
+                () => reject(new Error("Transaction timeout")),
+                timeoutMs
+              );
+            });
+
+            result = await Promise.race([transactionPromise, timeoutPromise]);
+          } else if (connectedWallet.isAuthenticated) {
+            // Use fallback method for authenticated users
+            console.log(
+              "Safe wallet: Using fallback method for authenticated user"
             );
-          });
-
-          console.log(
-            "Safe wallet: Calling signAndSubmitTransaction with timeout protection..."
-          );
-          const result = await Promise.race([
-            transactionPromise,
-            timeoutPromise,
-          ]);
+            result = await fallbackSignAndSubmitTransaction(payload);
+          } else {
+            throw new Error("No signing method available");
+          }
 
           console.log("Safe wallet: Transaction successful", result);
           return result;
@@ -261,7 +340,7 @@ export function useSafeWallet() {
   // Safe wrapper for connect
   const safeConnect = async (walletName: string) => {
     try {
-      if (aptosWallet.connected) {
+      if (connectedWallet.connected) {
         console.log("Safe wallet: Already connected");
         return;
       }

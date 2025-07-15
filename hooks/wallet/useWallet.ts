@@ -185,19 +185,31 @@ export function useWallet(): UseWalletReturn {
         // 5. TỰ ĐỘNG CONNECT APTOS WALLET ADAPTER SAU KHI LOGIN THÀNH CÔNG
         try {
           console.log("Attempting to connect Aptos wallet adapter...");
+
+          // Đợi một chút để đảm bảo Aptos wallet adapter đã sẵn sàng
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
           if (aptosWallet.wallets && aptosWallet.wallets.length > 0) {
             const petraWallet =
-              aptosWallet.wallets.find((w: any) => w.name === "Petra") ||
-              aptosWallet.wallets[0];
+              aptosWallet.wallets.find(
+                (w: any) => w.name === "Petra" && w.readyState === "Installed"
+              ) || aptosWallet.wallets[0];
+
             console.log(
               "Connecting to Aptos wallet adapter:",
-              petraWallet.name
+              petraWallet?.name
             );
 
             // Chỉ connect nếu chưa connected
-            if (!aptosWallet.connected) {
+            if (!aptosWallet.connected && petraWallet) {
               await aptosWallet.connect(petraWallet.name);
               console.log("Aptos wallet adapter connected successfully!");
+
+              // Thêm toast thông báo kết nối thành công
+              toast({
+                title: "Wallet integrated",
+                description: "Your wallet has been connected for transactions.",
+              });
             }
           }
         } catch (aptosConnectError: any) {
@@ -205,7 +217,13 @@ export function useWallet(): UseWalletReturn {
             "Failed to auto-connect Aptos wallet adapter:",
             aptosConnectError
           );
-          // Không show error toast vì đây là auto-connect, user có thể connect manual sau
+          // Hiển thị thông báo nhẹ để user biết có thể cần connect manual
+          toast({
+            title: "Wallet ready",
+            description:
+              "Login successful! You may need to connect wallet in header for transactions.",
+            variant: "default",
+          });
         }
 
         toast({

@@ -12,6 +12,7 @@ const menuItems = [
   { name: "Explore", href: "#link" },
   { name: "Ranking", href: "#link" },
   { name: "Create Token", href: "/token/create" },
+  { name: "Manage Tokens", href: "/token/manage" },
   { name: "Trade", href: "/trade" },
   { name: "Passport", href: "/passport" },
   { name: "Profile", href: "/profile" },
