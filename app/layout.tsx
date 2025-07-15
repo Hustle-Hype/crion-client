@@ -3,6 +3,9 @@ import { Funnel_Display } from "next/font/google";
 import "@/styles/globals.css";
 import Providers from "@/components/providers";
 import MobileSupportSoon from "@/components/temp/mobile-support-soon";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/contexts/AuthContext";
+import PageLayout from "@/components/layouts/page-layout";
 
 const fontSans = Funnel_Display({
   variable: "--font-funnel-display",
@@ -25,12 +28,19 @@ export default function RootLayout({
         className={`${fontSans.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
-        <div className="hidden lg:block">
-          <Providers>{children}</Providers>
-        </div>
-        <div className="block lg:hidden">
-          <MobileSupportSoon />
-        </div>
+        <AuthProvider>
+          <div className="hidden lg:block">
+            <Providers>
+              <PageLayout>
+                {children}
+              </PageLayout>
+            </Providers>
+          </div>
+          <div className="block lg:hidden">
+            <MobileSupportSoon />
+          </div>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

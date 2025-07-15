@@ -1,5 +1,6 @@
 import React from "react";
 import { ThemeProvider } from "./theme-provider";
+import { WalletProvider } from "./wallet-provider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -9,7 +10,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <WalletProvider>
+        {children}
+      </WalletProvider>
     </ThemeProvider>
   );
 }

@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function HeroSection() {
   return (
-    <div className="relative w-full min-h-screen flex flex-col items-center justify-center bg-[#0B0E14] overflow-hidden px-4 sm:px-6 lg:px-8">
+    <div className="relative w-full h-screen flex flex-col items-center justify-center bg-[#000000] overflow-hidden px-4 sm:px-6 lg:px-8">
       <div className="absolute h-[414px] w-full top-[-100px]">
         <div className="transform-gpu absolute h-[90px] w-full left-1/2 -translate-x-1/2 blur-[50px] [border-radius:50%_100%] bg-[#ABF2FF] mix-blend-plus-lighter" />
       </div>
@@ -21,14 +21,14 @@ export default function HeroSection() {
         <p className="text-base sm:text-lg font-bold z-50 pointer-events-none text-center lg:text-left">
           Smart scores. Clean UI. Zero BS.
         </p>
-        <Button variant="crion" className="w-fit">
-          <Link href="/">Tokenize Your Assets</Link>
+        <Button variant="crion" className="w-fit" asChild>
+          <Link href="/token/create">Tokenize Your Assets</Link>
         </Button>
       </div>
-      <Spline
+      {/* <Spline
         className="absolute z-10 w-full h-full top-16 lg:inset-10 lg:top-14 lg:left-100 opacity-50 lg:opacity-100 hidden lg:block"
         scene="https://prod.spline.design/GEgZWYXC0EjvS3Vs/scene.splinecode"
-      />
+      /> */}
     </div>
   );
 }
