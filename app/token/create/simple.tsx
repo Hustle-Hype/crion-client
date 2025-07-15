@@ -9,7 +9,7 @@ import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
 import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { toast } from "@/hooks/use-toast";
 
-const CONTRACT_ADDRESS = "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
+const CONTRACT_ADDRESS = "0x9ff9d0f7bcbba328160813c609edf2d6bfd19cb0648ccb0ed5954f35c7d877e6";
 const MODULE_NAME = "fa_factory";
 
 interface TokenFormData {
@@ -86,29 +86,26 @@ export default function SimpleCreateTokenPage() {
         }
         setIsLoading(true);
         try {
-            // Match exactly the Move CLI call order and types
             const symbolBytes = Array.from(new TextEncoder().encode(formData.symbol));
             const nameBytes = Array.from(new TextEncoder().encode(formData.name));
             const iconBytes = Array.from(new TextEncoder().encode(formData.iconUrl));
             const projectUrlBytes = Array.from(new TextEncoder().encode(formData.projectUrl));
-            const descriptionBytes = Array.from(new TextEncoder().encode(formData.description));
             const assetTypeBytes = Array.from(new TextEncoder().encode(formData.assetType));
             const args = [
-                symbolBytes, // string:TEST
-                nameBytes, // string:"Test Token"
-                iconBytes, // string:icon url
-                projectUrlBytes, // string:project url
-                descriptionBytes, // string:description
-                Number(formData.decimals), // u8
-                formData.totalSupply, // u64
-                formData.mintAmount, // u64
-                formData.buyFee, // u64
-                assetTypeBytes, // string:asset type
-                formData.backingRatio, // u64
-                formData.withdrawalLimit, // u64
-                formData.withdrawalCooldown, // u64
-                formData.graduationThreshold, // u64
-                formData.graduationTarget, // u64
+                symbolBytes,
+                nameBytes,
+                iconBytes,
+                projectUrlBytes,
+                formData.decimals,
+                formData.totalSupply,
+                formData.mintAmount,
+                formData.buyFee,
+                assetTypeBytes,
+                formData.backingRatio,
+                formData.withdrawalLimit,
+                formData.withdrawalCooldown,
+                formData.graduationThreshold,
+                formData.graduationTarget,
             ];
             const entryFunctionPayload = {
                 type: "entry_function_payload",
