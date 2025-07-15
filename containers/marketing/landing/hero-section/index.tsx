@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function HeroSection() {
   return (
-    <div className="relative w-full h-screen flex flex-col items-center justify-center bg-[#0B0E14] overflow-hidden px-4 sm:px-6 lg:px-8">
+    <div className="relative w-full h-screen flex flex-col items-center justify-center bg-[#000000] overflow-hidden px-4 sm:px-6 lg:px-8">
       <div className="absolute h-[414px] w-full top-[-100px]">
         <div className="transform-gpu absolute h-[90px] w-full left-1/2 -translate-x-1/2 blur-[50px] [border-radius:50%_100%] bg-[#ABF2FF] mix-blend-plus-lighter" />
       </div>
