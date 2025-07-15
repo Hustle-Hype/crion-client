@@ -254,7 +254,32 @@ export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionPr
 
             {/* Token grid */}
             {loading ? (
-                <div>Đang tải danh sách token...</div>
+                <div className="grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-3 gap-5">
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                        <div key={idx} className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse bg-[#18191c] borderToken" style={{ width: 298, minHeight: 367 }}>
+                            <div className="relative rounded-xl">
+                                <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#232323]" />
+                            </div>
+                            <div className="bg-[#1A1A1A] py-[14px] px-5 rounded-xl rounded-t-none flex-1 flex flex-col justify-between">
+                                <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
+                                    <div className="h-5 bg-[#232323] rounded w-2/3 mb-2" />
+                                    <div className="flex justify-between items-center">
+                                        <div className="h-3 bg-[#232323] rounded w-1/4" />
+                                        <div className="h-3 bg-[#232323] rounded w-1/4" />
+                                    </div>
+                                </div>
+                                <div className="pt-5 flex flex-col gap-5 flex-1">
+                                    <div className="flex justify-between items-center">
+                                        <div className="h-4 bg-[#232323] rounded w-1/4" />
+                                        <div className="h-4 bg-[#232323] rounded w-1/4" />
+                                        <div className="h-4 bg-[#232323] rounded w-1/4" />
+                                    </div>
+                                    <div className="h-3 bg-[#232323] rounded w-full" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             ) : filteredTokens.length === 0 ? (
                 <div>Không có token nào trên contract.</div>
             ) : (
@@ -272,12 +297,12 @@ export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionPr
                                     height="136"
                                     alt={token.name}
                                     className="rounded-xl min-h-[136px] max-h-[136px] object-cover w-full rounded-b-none"
-                                    src={"https://moc247.com/wp-content/uploads/2023/12/top-100-hinh-nen-robot-dep-4k-cuc-ngau-va-an-tuong-nhat_1.jpg"}
+                                    src={"https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-pc-800x447.jpg"}
                                 />
                                 <div className="absolute top-2 left-2 z-10">
                                     {(!token.saleStatus || token.saleStatus === "Bonding") ? (
-                                        <div className="flex border-1 px-[10px] bg-transparent py-2 justify-center items-center max-h-[24px] rounded-full border-[#2D6BFF99]">
-                                            <p className="text-[11px] text-[#2D6BFF] font-medium uppercase">Bonding</p>
+                                        <div className="flex border-1 !border-[#24C85866] px-[10px] py-1 bg-[#24C85811] justify-center items-center max-h-[24px] rounded-full">
+                                            <p className="text-[11px] text-[#24C858] font-medium uppercase">Bonding</p>
                                         </div>
                                     ) : (
                                         <div className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] bg-gradient-to-r from-[#2D6BFF33] to-[#00C6FB33] shadow-sm min-h-[24px]">
