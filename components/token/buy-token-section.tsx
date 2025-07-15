@@ -49,7 +49,7 @@ function toStringSafe(val: any): string {
     return '';
 }
 
-interface TokenInfo {
+export interface TokenInfo {
     symbol: string;
     name: string;
     decimals: number;
@@ -77,10 +77,14 @@ interface TokenInfo {
     saleStatus: string;
 }
 
-export default function BuyTokenSection() {
+interface BuyTokenSectionProps {
+    tokens: TokenInfo[];
+    setTokens: React.Dispatch<React.SetStateAction<TokenInfo[]>>;
+}
+
+export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionProps) {
     const connectedWallet = useConnectedWallet();
     const { safeSignAndSubmitTransaction } = useSafeWallet();
-    const [tokens, setTokens] = useState<TokenInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [buyAmounts, setBuyAmounts] = useState<{ [symbol: string]: string }>({});
     const [buying, setBuying] = useState<string | null>(null);
@@ -95,7 +99,7 @@ export default function BuyTokenSection() {
                 eventType: `${CONTRACT_ADDRESS}::${MODULE_NAME}::TokenCreated`,
                 minimumLedgerVersion: 0,
             });
-            const tokens: TokenInfo[] = [];
+            const fetchedTokens: TokenInfo[] = [];
             for (let i = 0; i < events.length; i++) {
                 const event = events[i];
                 try {
@@ -128,7 +132,7 @@ export default function BuyTokenSection() {
                     }
                     if (!fullInfo || !Array.isArray(fullInfo) || fullInfo.length < 25) continue;
                     const iconUrl = decodeHexStringSafe(fullInfo[3]);
-                    tokens.push({
+                    fetchedTokens.push({
                         symbol: decodeHexStringSafe(fullInfo[0]),
                         name: decodeHexStringSafe(fullInfo[1]),
                         decimals: Number(fullInfo[2] ?? 6),
@@ -157,13 +161,13 @@ export default function BuyTokenSection() {
                     });
                 } catch { }
             }
-            setTokens(tokens);
+            setTokens(fetchedTokens);
         } catch (e) {
             toast({ title: "Error", description: "Failed to fetch tokens", variant: "destructive" });
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [setTokens]);
 
     useEffect(() => { fetchTokens(); }, [fetchTokens]);
 
@@ -259,11 +263,12 @@ export default function BuyTokenSection() {
                         <a
                             key={token.symbol}
                             href={`/token/buy/${token.symbol}`}
-                            className="flex flex-col z-10 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-2 cursor-pointer borderToken"
+                            className="flex flex-col z-10 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-2 cursor-pointer borderToken min-w-[298px] max-w-[298px] w-full"
+                            style={{ width: 298 }}
                         >
                             <div className="relative rounded-xl">
                                 <img
-                                    width="313"
+                                    width="298"
                                     height="136"
                                     alt={token.name}
                                     className="rounded-xl min-h-[136px] max-h-[136px] object-cover w-full rounded-b-none"
