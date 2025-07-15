@@ -5,7 +5,7 @@ import HeroSection from "@/containers/marketing/landing/hero-section";
 import BuyTokenSection from "@/components/token/buy-token-section";
 
 import { useState } from "react";
-import MostIgnitedSection from "@/components/token/MostIgnitedSection";
+import MostIgnitedSection from "@/components/token/most-ignited-section";
 
 
 
