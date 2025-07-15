@@ -25,10 +25,10 @@ export default function HeroSection() {
           <Link href="/">Tokenize Your Assets</Link>
         </Button>
       </div>
-      <Spline
+      {/* <Spline
         className="absolute z-10 w-full h-full top-16 lg:inset-10 lg:top-14 lg:left-100 opacity-50 lg:opacity-100 hidden lg:block"
         scene="https://prod.spline.design/GEgZWYXC0EjvS3Vs/scene.splinecode"
-      />
+      /> */}
     </div>
   );
 }

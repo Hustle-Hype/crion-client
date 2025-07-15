@@ -242,7 +242,7 @@ export default function BuyTokenSection() {
         });
 
     return (
-        <div className="w-full h-full py-10 px-4 md:px-8 flex flex-col gap-6">
+        <div className="w-full h-full py-10 px-28 md:px-28 flex flex-col gap-6">
             {/* Tabs filter */}
             <TokenTabs activeTab={activeTab} setActiveTab={setActiveTab} />
             {/* Toolbar: search, sort, filter buttons */}
@@ -267,12 +267,18 @@ export default function BuyTokenSection() {
                                     height="136"
                                     alt={token.name}
                                     className="rounded-xl min-h-[136px] max-h-[136px] object-cover w-full rounded-b-none"
-                                    src={"https://png.pngtree.com/thumb_back/fw800/background/20231002/pngtree-digital-binary-code-backdrop-3d-render-of-web3-technology-image_13560192.png"}
+                                    src={"https://moc247.com/wp-content/uploads/2023/12/top-100-hinh-nen-robot-dep-4k-cuc-ngau-va-an-tuong-nhat_1.jpg"}
                                 />
                                 <div className="absolute top-2 left-2 z-10">
-                                    <div className="flex border-1 px-[10px] bg-transparent py-2 justify-center items-center max-h-[24px] rounded-full !border-[#2D6BFF66] bgStatusDeployed">
-                                        <p className="text-[11px] text-[#2D6BFF] font-medium uppercase">{token.saleStatus || "Bonding"}</p>
-                                    </div>
+                                    {(!token.saleStatus || token.saleStatus === "Bonding") ? (
+                                        <div className="flex border-1 px-[10px] bg-transparent py-2 justify-center items-center max-h-[24px] rounded-full border-[#2D6BFF99]">
+                                            <p className="text-[11px] text-[#2D6BFF] font-medium uppercase">Bonding</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] bg-gradient-to-r from-[#2D6BFF33] to-[#00C6FB33] shadow-sm min-h-[24px]">
+                                            <span className="text-[11px] text-[#2D6BFF] font-semibold uppercase tracking-wide drop-shadow-sm">{token.saleStatus}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="bg-[#1A1A1A] py-[14px] px-5 rounded-xl rounded-t-none">
