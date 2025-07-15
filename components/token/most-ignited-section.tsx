@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import "@/styles/custom-scrollbar.css";
+import "@/styles/custom-scrollbar.css";
 
 export interface TokenInfo {
     symbol: string;
@@ -105,6 +107,16 @@ export default function MostIgnitedSection({ tokens = [] }: { tokens: TokenInfo[
         setStart((s) => Math.min(tokens.length - visibleCount, s + visibleCount));
     };
 
+    // Ref for horizontal scroll
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Allow shift+wheel to scroll horizontally
+    const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+        if (e.shiftKey && scrollRef.current) {
+            scrollRef.current.scrollLeft += e.deltaY;
+        }
+    };
+
     return (
         <section className="w-full flex flex-col md:flex-row gap-8 md:gap-0 py-10 px-4 md:px-20 bg-[#121316]">
             {/* Left: Title, subtitle, nav */}
@@ -130,7 +142,7 @@ export default function MostIgnitedSection({ tokens = [] }: { tokens: TokenInfo[
                 <div className="hidden md:flex items-center gap-4 mt-8">
                     <button
                         type="button"
-                        className="z-0 group relative box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu data-[pressed=true]:scale-[0.97] outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2 text-small gap-2 px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-10 data-[hover=true]:opacity-hover bg-[#1A1A1A] rounded-full w-12 h-12 flex justify-center items-center hover:bg-[#2A2A2A] transition-colors"
+                        className="z-0 group relative box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu data-[pressed=true]:scale-[0.97] outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2 text-small gap-2 px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-10 data-[hover=true]:opacity-hover bg-[#121212] rounded-full w-12 h-12 flex justify-center items-center hover:bg-[#2A2A2A] transition-colors"
                         onClick={handlePrev}
                         disabled={!canPrev}
                         tabIndex={0}
@@ -143,7 +155,7 @@ export default function MostIgnitedSection({ tokens = [] }: { tokens: TokenInfo[
                     </button>
                     <button
                         type="button"
-                        className="z-0 group relative box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu data-[pressed=true]:scale-[0.97] outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2 text-small gap-2 px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-10 data-[hover=true]:opacity-hover bg-[#1A1A1A] rounded-full w-12 h-12 flex justify-center items-center hover:bg-[#2A2A2A] transition-colors"
+                        className="z-0 group relative box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu data-[pressed=true]:scale-[0.97] outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2 text-small gap-2 px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-10 data-[hover=true]:opacity-hover bg-[#121212] rounded-full w-12 h-12 flex justify-center items-center hover:bg-[#2A2A2A] transition-colors"
                         onClick={handleNext}
                         disabled={!canNext}
                         tabIndex={0}
@@ -157,11 +169,15 @@ export default function MostIgnitedSection({ tokens = [] }: { tokens: TokenInfo[
                 </div>
             </div>
             {/* Right: Horizontal card row */}
-            <div className="flex-1 overflow-x-auto">
+            <div
+                className="flex-1 overflow-x-auto custom-scrollbar hide-scrollbar"
+                ref={scrollRef}
+                onWheel={handleWheel}
+            >
                 <div className="flex gap-5 pb-2">
                     {loading
                         ? Array.from({ length: visibleCount }).map((_, idx) => (
-                            <div key={idx} className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse bg-[#18191c] borderToken" style={{ minHeight: 367, width: 298 }}>
+                            <div key={idx} className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse bg-[#1A1A1A] borderToken" style={{ minHeight: 367, width: 298 }}>
                                 <div className="relative rounded-xl">
                                     <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#232323]" />
                                 </div>

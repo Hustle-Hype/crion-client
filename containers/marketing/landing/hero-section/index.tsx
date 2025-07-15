@@ -21,8 +21,8 @@ export default function HeroSection() {
         <p className="text-base sm:text-lg font-bold z-50 pointer-events-none text-center lg:text-left">
           Smart scores. Clean UI. Zero BS.
         </p>
-        <Button variant="crion" className="w-fit">
-          <Link href="/">Tokenize Your Assets</Link>
+        <Button variant="crion" className="w-fit" asChild>
+          <Link href="/token/create">Tokenize Your Assets</Link>
         </Button>
       </div>
       {/* <Spline

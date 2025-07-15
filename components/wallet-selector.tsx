@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+// Setup Aptos SDK for balance fetch
+const aptosConfig = new AptosConfig({ network: Network.TESTNET });
+const aptos = new Aptos(aptosConfig);
 import { Button } from "@/components/ui/button";
 import { HyperText } from "@/components/hyper-text";
 import { useWallet } from "@/hooks/wallet/useWallet";
@@ -15,11 +19,6 @@ interface Wallet {
 }
 
 export function WalletSelector() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
-
     const {
         connect,
         disconnect,
@@ -32,6 +31,31 @@ export function WalletSelector() {
         getAvatarUrl,
         logout
     } = useWallet();
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [aptBalance, setAptBalance] = useState<string>("");
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
+
+    // Fetch APT balance when account changes
+    useEffect(() => {
+        const fetchBalance = async () => {
+            if (account?.address) {
+                try {
+                    const res = await aptos.getAccountAPTAmount({ accountAddress: account.address });
+                    // Chia cho 1e8 để chuyển từ octas sang APT
+                    const apt = Number(res) / 1e8;
+                    setAptBalance(apt.toLocaleString(undefined, { maximumFractionDigits: 4 }) + " APT");
+                } catch {
+                    setAptBalance("");
+                }
+            } else {
+                setAptBalance("");
+            }
+        };
+        fetchBalance();
+    }, [account?.address]);
 
     // Wallet list with better icons and more options
     const wallets: Wallet[] = [
@@ -106,8 +130,9 @@ export function WalletSelector() {
                         className="w-6 h-6 lg:w-8 lg:h-8 rounded-full flex-shrink-0"
                     />
                     <div className="min-w-0 hidden sm:flex sm:flex-col">
-                        <div className="text-xs lg:text-sm font-medium text-white truncate">
+                        <div className="text-xs lg:text-sm font-medium text-white truncate flex items-center gap-2">
                             {`${account.address.slice(0, 4)}...${account.address.slice(-3)}`}
+                            {aptBalance && <span className="text-[#ABF2FF] font-semibold ml-2">{aptBalance}</span>}
                         </div>
                         <div className="text-xs text-gray-400 truncate">
                             Score: {userData.score?.totalScore || 0} | Staked: {userData.stakedAmount}
@@ -148,6 +173,9 @@ export function WalletSelector() {
                                     <div className="text-xs text-gray-400">
                                         {`${account.address.slice(0, 8)}...${account.address.slice(-6)}`}
                                     </div>
+                                    {aptBalance && (
+                                        <div className="text-xs text-[#ABF2FF] font-semibold mt-1">{aptBalance}</div>
+                                    )}
                                 </div>
                             </div>
                         </div>
