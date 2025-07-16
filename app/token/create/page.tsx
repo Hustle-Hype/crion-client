@@ -57,6 +57,28 @@ interface TokenFormData {
 
 
 export default function SimpleCreateTokenPage() {
+    // Upload image handler
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append("image", file);
+        try {
+            const res = await fetch("https://crion.onrender.com/api/v1/issuer/upload/image", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.status === 200 && data.data?.url) {
+                setFormData(prev => ({ ...prev, iconUrl: data.data.url }));
+                toast({ title: "Upload thành công", description: "Ảnh đã được tải lên!", variant: "default" });
+            } else {
+                toast({ title: "Upload thất bại", description: data.message || "Không thể upload ảnh", variant: "destructive" });
+            }
+        } catch (err) {
+            toast({ title: "Lỗi upload", description: "Không thể upload ảnh", variant: "destructive" });
+        }
+    };
     const connectedWallet = useConnectedWallet();
     const safeWallet = useSafeWallet();
     const [step, setStep] = useState(0); // 0: Asset Info, 1: Social Links, 2: Review
@@ -223,7 +245,7 @@ export default function SimpleCreateTokenPage() {
     ];
 
     return (
-        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] pt-28 pb-10 lg:pb-10 min-h-[calc(100vh-200px)]">
+        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] pt-10 pb-10 lg:pb-10 min-h-[calc(100vh-200px)]">
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Stepper */}
                 <div className="w-full lg:w-[500px] flex justify-center lg:justify-start">
@@ -296,8 +318,14 @@ export default function SimpleCreateTokenPage() {
                                     <Input name="symbol" value={formData.symbol} onChange={handleInputChange} maxLength={50} placeholder="e.g. RETK" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Token Icon URL</label>
-                                    <Input name="iconUrl" value={formData.iconUrl} onChange={handleInputChange} placeholder="e.g. https://domain.com/token.png" />
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Token Icon</label>
+                                    <div className="flex flex-col gap-2">
+                                        <Input name="iconUrl" value={formData.iconUrl} onChange={handleInputChange} placeholder="e.g. https://domain.com/token.png" />
+                                        <input type="file" accept="image/*" onChange={handleImageUpload} className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        {formData.iconUrl && (
+                                            <img src={formData.iconUrl} alt="Token Icon Preview" className="w-20 h-20 object-cover rounded mt-2 border border-white/10" />
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Project URL</label>
