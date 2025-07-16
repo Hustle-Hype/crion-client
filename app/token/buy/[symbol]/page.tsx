@@ -1,0 +1,567 @@
+"use client";
+import { toast } from "@/hooks/use-toast";
+import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
+import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+
+const CONTRACT_ADDRESS = "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
+const MODULE_NAME = "fa_factory";
+
+const aptosConfig = new AptosConfig({
+    network: Network.TESTNET,
+    clientConfig: {
+        API_KEY: "AG-9W2L7VUVYZ8VCUMYY8VMRVMICKYNYC68H"
+    }
+});
+const aptos = new Aptos(aptosConfig);
+
+function decodeHexString(hexString: string): string {
+    try {
+        if (!hexString || typeof hexString !== 'string' || !hexString.startsWith('0x')) return hexString || '';
+        const hex = hexString.slice(2);
+        let result = '';
+        for (let i = 0; i < hex.length; i += 2) {
+            const byte = parseInt(hex.substr(i, 2), 16);
+            if (byte > 0) result += String.fromCharCode(byte);
+        }
+        return result;
+    } catch {
+        return hexString || '';
+    }
+}
+
+function decodeHexStringSafe(val: any): string {
+    if (!val) return '';
+    if (typeof val === 'string') return decodeHexString(val);
+    if (val.type === 'string' && typeof val.value === 'string') return decodeHexString(val.value);
+    return '';
+}
+
+function formatNumberCompact(value: string | number, decimals = 2): string {
+    if (value === undefined || value === null || value === '') return '0';
+    const num = typeof value === 'number' ? value : Number(value);
+    if (isNaN(num)) return value.toString();
+    return num.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: decimals });
+}
+
+export interface TokenInfo {
+    symbol: string;
+    name: string;
+    decimals: number;
+    iconUrl: string;
+    projectUrl: string;
+    description: string;
+    creator: string;
+    totalSupply: string;
+    circulatingSupply: string;
+    k: string;
+    feeRate: string;
+    assetType: string;
+    backingRatio: string;
+    withdrawalLimit: string;
+    withdrawalCooldown: string;
+    graduationThreshold: string;
+    graduationTarget: string;
+    isGraduated: boolean;
+    oraclePrice: string;
+    reserve: string;
+    currentPriceApt: string;
+    currentPriceUsd: string;
+    liquidity: string;
+    marketCap: string;
+    saleStatus: string;
+}
+
+export default function TokenDetailPage() {
+    const params = useParams();
+    const symbol = typeof params?.symbol === 'string' ? params.symbol : Array.isArray(params?.symbol) ? params.symbol[0] : '';
+    const [token, setToken] = useState<TokenInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [buyAmount, setBuyAmount] = useState("");
+    const [sellAmount, setSellAmount] = useState("");
+    const [buying, setBuying] = useState(false);
+    const [selling, setSelling] = useState(false);
+    // Removed trade history logic
+    // Add state for buy/sell tab
+    const [buyingTab, setBuyingTab] = useState<'buy' | 'sell'>('buy');
+    const connectedWallet = useConnectedWallet();
+    const { safeSignAndSubmitTransaction } = useSafeWallet();
+
+    const fetchToken = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Find creator address by searching events
+            const events = await aptos.getModuleEventsByEventType({
+                eventType: `${CONTRACT_ADDRESS}::${MODULE_NAME}::TokenCreated`,
+                minimumLedgerVersion: 0,
+            });
+            let creatorAddress: string | null = null;
+            for (let i = 0; i < events.length; i++) {
+                const event = events[i];
+                const eventSymbol = decodeHexString(event.data.symbol);
+                if (eventSymbol === symbol) {
+                    creatorAddress = event.data.creator;
+                    break;
+                }
+            }
+            if (!creatorAddress) throw new Error("Không tìm thấy token này!");
+            // Call get_full_token_info
+            const viewArgs: [string, number[]] = [creatorAddress, Array.from(new TextEncoder().encode(symbol))];
+            const fullInfo = await aptos.view({
+                payload: {
+                    function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::get_full_token_info`,
+                    typeArguments: [],
+                    functionArguments: viewArgs
+                }
+            });
+            if (!fullInfo || !Array.isArray(fullInfo) || fullInfo.length < 25) throw new Error("Không lấy được thông tin token!");
+            setToken({
+                symbol: decodeHexStringSafe(fullInfo[0]),
+                name: decodeHexStringSafe(fullInfo[1]),
+                decimals: Number(fullInfo[2] ?? 6),
+                iconUrl: decodeHexStringSafe(fullInfo[3]),
+                projectUrl: decodeHexStringSafe(fullInfo[4]),
+                description: decodeHexStringSafe(fullInfo[5]),
+                creator: String(fullInfo[6]),
+                totalSupply: String(fullInfo[7]),
+                circulatingSupply: String(fullInfo[8]),
+                k: String(fullInfo[9]),
+                feeRate: String(fullInfo[10]),
+                assetType: decodeHexStringSafe(fullInfo[11]),
+                backingRatio: String(fullInfo[12]),
+                withdrawalLimit: String(fullInfo[13]),
+                withdrawalCooldown: String(fullInfo[14]),
+                graduationThreshold: String(fullInfo[15]),
+                graduationTarget: String(fullInfo[16]),
+                isGraduated: Boolean(fullInfo[17]),
+                oraclePrice: String(fullInfo[18]),
+                reserve: String(fullInfo[19]),
+                currentPriceApt: String(fullInfo[20]),
+                currentPriceUsd: String(fullInfo[21]),
+                liquidity: String(fullInfo[22]),
+                marketCap: String(fullInfo[23]),
+                saleStatus: decodeHexStringSafe(fullInfo[24]),
+            });
+        } catch (e: any) {
+            toast({ title: "Error", description: e?.message || String(e), variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
+    }, [symbol]);
+
+    useEffect(() => { fetchToken(); }, [fetchToken]);
+
+    // Removed trade history effect
+
+    const handleBuy = async () => {
+        if (!connectedWallet.connected || !connectedWallet.account) {
+            toast({ title: "Wallet not connected", description: "Please connect your wallet.", variant: "destructive" });
+            return;
+        }
+        if (!buyAmount || parseFloat(buyAmount) <= 0) {
+            toast({ title: "Invalid amount", description: "Nhập số lượng muốn mua.", variant: "destructive" });
+            return;
+        }
+        if (!token) return;
+        setBuying(true);
+        try {
+            // Arguments: address, string, u64
+            const creatorAddress = token.creator.startsWith('0x') ? token.creator : `0x${token.creator}`;
+            const symbolString = token.symbol;
+            // Convert buyAmount to integer string (u64)
+            const amountU64 = buyAmount.includes('.') ? buyAmount.split('.')[0] : buyAmount;
+            const payload = {
+                type: "entry_function_payload",
+                function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
+                type_arguments: [],
+                arguments: [creatorAddress, symbolString, amountU64],
+            };
+            let response;
+            const walletAny = connectedWallet.wallet as any;
+            if (walletAny && typeof walletAny.signAndSubmitTransaction === 'function') {
+                try {
+                    response = await walletAny.signAndSubmitTransaction({ payload });
+                } catch (err1) {
+                    response = await safeSignAndSubmitTransaction(payload);
+                }
+            } else {
+                response = await safeSignAndSubmitTransaction(payload);
+            }
+            toast({
+                title: "Đã gửi giao dịch mua token!",
+                description: (
+                    <div>
+                        Đã gửi giao dịch mua {token.symbol}.<br />
+                        {response?.hash && (
+                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Xem trên explorer</a>
+                        )}
+                    </div>
+                )
+            });
+        } catch (e: any) {
+            toast({ title: "Error", description: e?.message || String(e), variant: "destructive" });
+        } finally {
+            setBuying(false);
+        }
+    };
+
+    const handleSell = async () => {
+        if (!connectedWallet.connected || !connectedWallet.account) {
+            toast({ title: "Wallet not connected", description: "Please connect your wallet.", variant: "destructive" });
+            return;
+        }
+        if (!sellAmount || parseFloat(sellAmount) <= 0) {
+            toast({ title: "Invalid amount", description: "Nhập số lượng muốn bán.", variant: "destructive" });
+            return;
+        }
+        if (!token) return;
+        setSelling(true);
+        try {
+            // Arguments: address, string, u64
+            const creatorAddress = token.creator.startsWith('0x') ? token.creator : `0x${token.creator}`;
+            const symbolString = token.symbol;
+            // Convert sellAmount to integer string (u64)
+            const amountU64 = sellAmount.includes('.') ? sellAmount.split('.')[0] : sellAmount;
+            const payload = {
+                type: "entry_function_payload",
+                function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::sell_tokens`,
+                type_arguments: [],
+                arguments: [creatorAddress, symbolString, amountU64],
+            };
+            let response;
+            const walletAny = connectedWallet.wallet as any;
+            if (walletAny && typeof walletAny.signAndSubmitTransaction === 'function') {
+                try {
+                    response = await walletAny.signAndSubmitTransaction({ payload });
+                } catch (err1) {
+                    response = await safeSignAndSubmitTransaction(payload);
+                }
+            } else {
+                response = await safeSignAndSubmitTransaction(payload);
+            }
+            toast({
+                title: "Đã gửi giao dịch bán token!",
+                description: (
+                    <div>
+                        Đã gửi giao dịch bán {token.symbol}.<br />
+                        {response?.hash && (
+                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Xem trên explorer</a>
+                        )}
+                    </div>
+                )
+            });
+        } catch (e: any) {
+            toast({ title: "Error", description: e?.message || String(e), variant: "destructive" });
+        } finally {
+            setSelling(false);
+        }
+    };
+
+    if (loading) return <div className="p-10 text-center">Đang tải thông tin token...</div>;
+    if (!token) return <div className="p-10 text-center">Không tìm thấy token.</div>;
+
+    return (
+        <div className="max-w-7xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left/Main section */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+                {/* Header */}
+                <div className="flex items-stretch p-3 gap-6">
+                    <div className="flex flex-col gap-2.5">
+                        <div className="relative w-[140px] h-[140px] border border-white/20 bg-white/5 p-2 rounded-2xl">
+                            {token.iconUrl && (
+                                <img
+                                    alt={token.name}
+                                    className="size-[132px] object-cover rounded-[12px]"
+                                    crossOrigin="anonymous"
+                                    src={token.iconUrl}
+                                />
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col gap-3">
+                        <div className="flex flex-col gap-4 justify-between h-full">
+                            <div className="flex flex-col gap-2">
+                                <div className="flex gap-x-2 justify-between">
+                                    <h1 className="text-[24px] font-bold text-white line-clamp-1">{token.name}</h1>
+                                    <div className="bg-[#292828] rounded-full max-h-8 py-2 pl-4 flex items-center gap-2 justify-between">
+                                        <div className="flex items-center gap-1 text-white text-sm font-normal">
+                                            <span className="font-medium whitespace-nowrap">Token address:</span>
+                                            <span>{token.creator.slice(0, 4)}...{token.creator.slice(-3)}</span>
+                                        </div>
+                                        <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none text-tiny gap-2 rounded-full px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-8 bg-[#313131] h-[28px] w-[28px] transition-colors">
+                                            {/* Copy icon */}
+                                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white/64"><path d="M5 9.16666C5 6.80963 5 5.63112 5.73223 4.89889C6.46447 4.16666 7.64298 4.16666 10 4.16666H12.5C14.857 4.16666 16.0355 4.16666 16.7678 4.89889C17.5 5.63112 17.5 6.80963 17.5 9.16666V13.3333C17.5 15.6903 17.5 16.8689 16.7678 17.6011C16.0355 18.3333 14.857 18.3333 12.5 18.3333H10C7.64298 18.3333 6.46447 18.3333 5.73223 17.6011C5 16.8689 5 15.6903 5 13.3333V9.16666Z" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path><path d="M5 15.8333C3.61929 15.8333 2.5 14.714 2.5 13.3333V8.33332C2.5 5.19063 2.5 3.61928 3.47631 2.64297C4.45262 1.66666 6.02397 1.66666 9.16667 1.66666H12.5C13.8807 1.66666 15 2.78594 15 4.16666" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[24px] font-normal text-white">${token.symbol}</span>
+                                    </div>
+                                </div>
+                                <p className="text-[14px] font-normal text-[#9FA3A0]">{token.description}</p>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[#7E7E7E] text-[12px] font-normal">Created by:</span>
+                                        <div className="flex items-center gap-2">
+                                            <img alt={token.creator} className="rounded-md object-cover size-8" crossOrigin="anonymous" src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${token.creator}&scale=70`} />
+                                            <span className="text-white text-[14px] font-normal" tabIndex={0}>{token.creator.slice(0, 4)}...{token.creator.slice(-3)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[#7E7E7E] text-[12px] font-normal">Created Date:</span>
+                                        <img width="22" height="22" alt="" src="/icons/ic-time.svg" />
+                                        <span className="text-white text-[14px] font-medium">July 14, 2025</span>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 cursor-pointer">
+                                    <div tabIndex={0}>
+                                        <svg width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white/64"><path fillRule="evenodd" clipRule="evenodd" d="M8.7574 2.83328C8.7574 1.2685 10.0317 0 11.6036 0C13.1755 0 14.4497 1.2685 14.4497 2.83328C14.4497 4.39806 13.1755 5.66656 11.6036 5.66656C10.8098 5.66656 10.0925 5.34296 9.57684 4.82236L5.63681 7.50497C5.67324 7.68596 5.69231 7.87293 5.69231 8.06395C5.69231 8.44221 5.61757 8.80376 5.48204 9.13423L9.80229 11.9727C10.2926 11.5734 10.92 11.3331 11.6036 11.3331C13.1755 11.3331 14.4497 12.6016 14.4497 14.1664C14.4497 15.7312 13.1755 16.9997 11.6036 16.9997C10.0317 16.9997 8.7574 15.7312 8.7574 14.1664C8.7574 13.7565 8.84513 13.3664 9.00279 13.0142L4.71747 10.1987C4.21758 10.6332 3.56279 10.8972 2.84616 10.8972C1.27427 10.8972 0 9.62872 0 8.06395C0 6.49917 1.27427 5.23067 2.84616 5.23067C3.75005 5.23067 4.55466 5.65006 5.07563 6.30278L8.89416 3.70289C8.80534 3.42849 8.7574 3.1361 8.7574 2.83328Z" fill="white" fillOpacity="0.64"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* Overview Section Only (history tab removed) */}
+                <div className="flex flex-col gap-4 md:gap-2">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Asset Name:</p><p className="text-[12px] text-white font-medium">{token.name}</p></div>
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Category:</p><div className="bgTag rounded-full py-2 px-[10px] max-h-[24px] flex justify-center items-center uppercase"><p className="text-[12px] font-medium text-[#2D6BFF]">Commodities</p></div></div>
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Network:</p><div className="flex items-center gap-2"><img alt="Aptos" className="w-4 h-4 rounded-full" src="/aptos-logo.png" /><span className="text-white font-medium text-xs md:text-sm leading-[1.43em] tracking-[-1%]">Aptos Testnet</span></div></div>
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Time:</p><p className="text-[12px] text-white font-medium">2d ago</p></div>
+                    </div>
+                    <div className="flex items-center flex-wrap gap-4 mb-2">
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Total Supply:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.totalSupply)}</p></div>
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Circulating Supply:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.circulatingSupply)}</p></div>
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Market Cap:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.marketCap)}</p></div>
+                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Holders count:</p><p className="text-[12px] text-white font-medium">1</p></div>
+                    </div>
+                </div>
+                )}
+            </div>
+            {/* Right/Sidebar section */}
+            <div className="lg:col-span-1 space-y-4 md:space-y-6">
+                {/* Price, Mcap, Volume */}
+                <div className="bg-[#181818] shadowInput rounded-xl border">
+                    <div className="border-b border-b-[#313131] flex items-center">
+                        <div className="flex flex-col gap-2 w-full p-3 h-full border-r-2 border-r-[#313131]">
+                            <div className="flex justify-between items-center"><p className="text-[12px] font-normal text-white/60 uppercase">Price</p><img width="20" height="20" alt="" src="/icons/ic-dollar-circle.svg" /></div>
+                            <div className="text-[22px] font-medium text-white"><span>{formatNumberCompact(token.currentPriceUsd)}</span></div>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full p-3 border-r-2 border-r-[#313131] h-full">
+                            <div className="flex justify-between items-center"><p className="text-[12px] font-normal text-white/60 uppercase">Mcap</p><img width="20" height="20" alt="" src="/icons/ic-money-send.svg" /></div>
+                            <p className="md:text-[22px] text-[16px] font-medium text-white">{formatNumberCompact(token.marketCap)}</p>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full p-3 h-full">
+                            <div className="flex justify-between items-center"><p className="text-[12px] font-normal text-white/60 uppercase">Volume 24h</p><img width="20" height="20" alt="" src="/icons/ic-bar-chart.svg" /></div>
+                            <p className="md:text-[22px] text-[16px] font-medium text-white">0.00</p>
+                        </div>
+                    </div>
+                    {/* Buy/Sell UI */}
+                    <div className="flex flex-col gap-4 p-4">
+                        {/* Buy/Sell Tabs */}
+                        <div className="flex bg-[#292828] rounded-lg p-1 mb-2">
+                            <button
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${buyingTab === 'buy' ? 'bg-[#4BD467] text-white shadow-sm' : 'text-white/60 hover:text-white'}`}
+                                onClick={() => setBuyingTab('buy')}
+                                disabled={buyingTab === 'buy'}
+                            >Buy</button>
+                            <button
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${buyingTab === 'sell' ? 'bg-[#F75C5E] text-white shadow-sm' : 'text-white/60 hover:text-white'}`}
+                                onClick={() => setBuyingTab('sell')}
+                                disabled={buyingTab === 'sell'}
+                            >Sell</button>
+                        </div>
+                        {/* Buy Tab Content */}
+                        {buyingTab === 'buy' && (
+                            <>
+                                <div className="flex justify-between items-center gap-3 relative">
+                                    <input placeholder="0.0" className="rounded-none text-foreground placeholder:text-muted-foreground focus-visible:!shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:ring-offset-0 focus-visible:ring-transparent truncate w-full bg-transparent border-0 text-[32px] p-0 leading-tight focus:outline-none tracking-[-2%] font-medium" type="text" value={buyAmount} inputMode="numeric" onChange={e => setBuyAmount(e.target.value)} disabled={buying} />
+                                    <div className="flex flex-col gap-2 min-w-[140px] justify-end items-end">
+                                        <div className="flex items-center gap-2"><p className="text-[12px] font-medium text-white">1%</p><p className="uppercase text-[12px] cursor-pointer font-normal underline text-primary">Set max slippage</p></div>
+                                        <div className="flex items-center gap-2"><p className="text-[12px] font-normal text-white">{token.symbol}</p><img width="20" height="20" crossOrigin="anonymous" className="rounded-full" alt="" src={token.iconUrl || "/firestarter-nativetoken.png"} /></div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2"><div className="text-[12px] font-normal text-white/60">Balance: </div><div className="text-[12px] font-normal text-white"><div className="text-[12px] font-normal text-white">0 {token.symbol}</div></div></div>
+                                <div className="flex items-center pb-3 gap-[6px]">
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">Reset</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.1 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.2 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.5 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">MAX</p></button>
+                                </div>
+                                <button type="button" className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none px-4 min-w-20 gap-2 transition-transform-colors-opacity motion-reduce:transition-none w-full text-center hover:opacity-85 h-12 rounded-full text-white font-medium border-b-2 transition-transform active:scale-[98%] text-base bg-[#4BD467] border-[#27AC4B]" style={{ boxShadow: "rgba(54, 253, 81, 0.44) 0px 3px 0px 0px" }} onClick={handleBuy} disabled={buying}>{buying ? "Đang gửi..." : "Buy"}</button>
+                            </>
+                        )}
+                        {/* Sell Tab Content */}
+                        {buyingTab === 'sell' && (
+                            <>
+                                <div className="flex justify-between items-center gap-3 relative">
+                                    <input placeholder="0.0" className="rounded-none text-foreground placeholder:text-muted-foreground focus-visible:!shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:ring-offset-0 focus-visible:ring-transparent truncate w-full bg-transparent border-0 text-[32px] p-0 leading-tight focus:outline-none tracking-[-2%] font-medium" type="text" value={sellAmount} inputMode="numeric" onChange={e => setSellAmount(e.target.value)} disabled={selling} />
+                                    <div className="flex flex-col gap-2 min-w-[140px] justify-end items-end">
+                                        <div className="flex items-center gap-2"><p className="text-[12px] font-medium text-white">1%</p><p className="uppercase text-[12px] cursor-pointer font-normal underline text-primary">Set max slippage</p></div>
+                                        <div className="flex items-center gap-2"><p className="text-[12px] font-normal text-white">{token.symbol}</p><img width="20" height="20" crossOrigin="anonymous" className="rounded-full" alt="" src={token.iconUrl || "/firestarter-nativetoken.png"} /></div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2"><div className="text-[12px] font-normal text-white/60">Balance: </div><div className="text-[12px] font-normal text-white"><div className="text-[12px] font-normal text-white">0 {token.symbol}</div></div></div>
+                                <div className="flex items-center pb-3 gap-[6px]">
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">Reset</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.1 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.2 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.5 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">MAX</p></button>
+                                </div>
+                                <button type="button" className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none px-4 min-w-20 gap-2 transition-transform-colors-opacity motion-reduce:transition-none w-full text-center hover:opacity-85 h-12 rounded-full text-white font-medium border-b-2 transition-transform active:scale-[98%] text-base bg-[#F75C5E] border-[#D73B3E]" style={{ boxShadow: "rgba(253, 54, 81, 0.44) 0px 3px 0px 0px" }} onClick={handleSell} disabled={selling}>{selling ? "Đang gửi..." : "Sell"}</button>
+                            </>
+                        )}
+                    </div>
+                </div>
+                {/* Trust Score */}
+                <div className="bg-[#181818] shadowInput rounded-xl border p-3">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center gap-2">
+                            <div className="text-white text-lg font-medium"><div>Current Trust Score</div></div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-info w-4 h-4 text-white/60" tabIndex={0}><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                        </div>
+                    </div>
+                    <div className="flex items-end justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="text-6xl font-bold text-[#4BD467]">34</div>
+                            <div className="flex flex-col gap-2"><span className="text-white/60 text-base">Risky</span><div className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-gray-600 to-gray-700 text-white">Basic Tier</div></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <img alt={token.creator} className="size-[24px] rounded-md object-cover w-6 h-6" crossOrigin="anonymous" src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${token.creator}&scale=70`} />
+                            <span className="text-white font-medium text-xs md:text-sm tracking-[-0.02em] leading-[1.5em]">{token.creator.slice(0, 4)}...{token.creator.slice(-3)}</span>
+                            <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none text-tiny gap-2 rounded-small px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-8 bg-[#313131] h-[28px] w-[28px] transition-colors">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white/64"><path d="M5 9.16666C5 6.80963 5 5.63112 5.73223 4.89889C6.46447 4.16666 7.64298 4.16666 10 4.16666H12.5C14.857 4.16666 16.0355 4.16666 16.7678 4.89889C17.5 5.63112 17.5 6.80963 17.5 9.16666V13.3333C17.5 15.6903 17.5 16.8689 16.7678 17.6011C16.0355 18.3333 14.857 18.3333 12.5 18.3333H10C7.64298 18.3333 6.46447 18.3333 5.73223 17.6011C5 16.8689 5 15.6903 5 13.3333V9.16666Z" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path><path d="M5 15.8333C3.61929 15.8333 2.5 14.714 2.5 13.3333V8.33332C2.5 5.19063 2.5 3.61928 3.47631 2.64297C4.45262 1.66666 6.02397 1.66666 9.16667 1.66666H12.5C13.8807 1.66666 15 2.78594 15 4.16666" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {/* Progress Bar Section */}
+                <div className="bg-[#181818] rounded-3xl overflow-hidden border shadowInput p-4">
+                    {(() => {
+                        const threshold = Number(token.graduationThreshold);
+                        const target = Number(token.graduationTarget);
+                        const reserve = Number(token.reserve);
+                        let progress = 0;
+                        let progressText = "0%";
+                        if (!isNaN(threshold) && !isNaN(target) && !isNaN(reserve) && target > threshold) {
+                            if (reserve <= threshold) {
+                                progress = 0;
+                            } else if (reserve >= target) {
+                                progress = 1;
+                            } else {
+                                progress = (reserve - threshold) / (target - threshold);
+                            }
+                            progressText = (progress * 100).toFixed(2) + "%";
+                        }
+                        const belowThreshold = reserve < threshold;
+                        // Blue color palette
+                        const barFrom = '#2D6BFF';
+                        const barTo = '#00C6FB';
+                        const glow1 = 'linear-gradient(90deg, rgba(45,107,255,0) 0%, #2D6BFF 77%, #00C6FB 100%)';
+                        const glow2 = 'linear-gradient(90deg, rgba(45,107,255,0) 0%, #2D6BFF 77%, #B2E6FF 100%)';
+                        return (
+                            <>
+                                <div className="flex items-center justify-between gap-2 mb-4">
+                                    <div className="flex items-center gap-2">
+                                        {/* Icon for progress */}
+                                        <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" stroke="#2D6BFF" strokeWidth="2" fill="none" /><path d="M10 5v5l3 3" stroke="#2D6BFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                        <span className="text-white font-normal text-sm md:text-base">Bonding Curve Progress</span>
+                                    </div>
+                                    <span className="text-[#2D6BFF] font-semibold text-base md:text-lg">{progressText}</span>
+                                </div>
+                                {/* Progress bar */}
+                                <div className="relative h-[12px] md:h-[16px] w-full mb-2">
+                                    <div className="flex items-center absolute top-0 left-0 right-0 w-full h-full">
+                                        {/* Use grid to make bars fill the container exactly */}
+                                        <div className="grid grid-cols-30 gap-[3px] md:gap-1 w-full h-full">
+                                            {[...Array(30)].map((_, i) => {
+                                                const percent = i / 29;
+                                                const filled = percent <= progress;
+                                                return (
+                                                    <div
+                                                        key={i}
+                                                        className={`h-[12px] md:h-[16px] rounded-full transition-colors duration-200 ${filled ? 'bg-gradient-to-r from-[#2D6BFF] to-[#00C6FB]' : 'bg-[#212121]'} w-full`}
+                                                    ></div>
+                                                );
+                                            })}
+                                        </div>
+                                        {/* Glow at the end of the last filled bar */}
+                                        {!belowThreshold && progress > 0 && (
+                                            (() => {
+                                                // Find the last filled bar index
+                                                const lastFilled = Math.floor(progress * 29);
+                                                // Calculate left position as a percentage of the bar
+                                                const leftPercent = (lastFilled + 1) / 30 * 100;
+                                                return <>
+                                                    <div
+                                                        className="absolute h-[12px] md:h-[16px] rounded-full pointer-events-none"
+                                                        style={{ left: `${leftPercent}%`, width: '23.8px', transform: 'translateX(-100%)', background: glow1, filter: 'blur(4px)', opacity: 0.8 }}
+                                                    ></div>
+                                                    <div
+                                                        className="absolute h-[12px] md:h-[16px] rounded-full pointer-events-none"
+                                                        style={{ left: `${leftPercent}%`, width: '17.8px', transform: 'translateX(-100%)', background: glow2, filter: 'blur(8px)', opacity: 0.9 }}
+                                                    ></div>
+                                                </>;
+                                            })()
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-3 mt-4">
+                                    {token.totalSupply && token.circulatingSupply && (
+                                        <>
+                                            <p className="text-xs font-normal text-[#FFFFFF8C]">This token will only be listed on the DEX after <span className="text-white/80 font-semibold">80%</span> of its total supply is sold on the platform.</p>
+                                            <p className="text-xs font-normal text-[#FFFFFF8C]">For example, if the total supply is <span className="text-white/80 font-semibold">{formatNumberCompact(token.totalSupply)} {token.symbol}</span>, then <span className="text-white/80 font-semibold">{formatNumberCompact(token.circulatingSupply)} {token.symbol}</span> must be sold before it moves to the DEX.</p>
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
+                {/* Holder Distribution */}
+                <div className="bg-[#181818] rounded-3xl p-4 shadowInput border">
+                    <div className="flex flex-col gap-2 mb-3 md:mb-4">
+                        <h3 className="text-white font-semibold text-base">Holder Distribution</h3>
+                        {token.circulatingSupply && token.totalSupply ? (
+                            <p className="text-[12px] font-normal text-[#7E7E7E]">
+                                {formatNumberCompact(token.circulatingSupply)} / {formatNumberCompact(token.totalSupply)} circulating
+                            </p>
+                        ) : null}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between py-2 md:py-4 rounded-[12px] border-t-1 border-t-[#313131]">
+                            <div className="flex items-center gap-2 md:gap-2">
+                                {/* Holder icon */}
+                                <div className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full text-xs md:text-sm font-medium bg-gradient-to-r from-[#2D6BFF] to-[#00C6FB] shadow-[0px_3px_0px_0px_rgba(45,107,255,0.44)] border border-white/25 text-white">
+                                    <svg width="18" height="18" fill="none" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" stroke="#fff" strokeWidth="1.5" fill="#2D6BFF" /><path d="M9 5.5a2 2 0 110 4 2 2 0 010-4zm0 5c-2.21 0-4 1.12-4 2.5V14h8v-1.5c0-1.38-1.79-2.5-4-2.5z" fill="#fff" /></svg>
+                                </div>
+                                <div className="flex items-center gap-2 md:gap-3">
+                                    <div className="flex flex-col items-center md:flex-row md:gap-1">
+                                        {/* Creator icon */}
+                                        <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#2D6BFF" /><path d="M16 10a3 3 0 110 6 3 3 0 010-6zm0 8c-3.31 0-6 1.68-6 3.75V24h12v-2.25C22 19.68 19.31 18 16 18z" fill="#fff" /></svg>
+                                        <span className="text-sm md:text-base text-[#A7A7A7] font-medium cursor-pointer hover:text-white transition-colors">{token.creator ? token.creator.slice(0, 4) + '...' + token.creator.slice(-3) : ''}</span>
+                                        <div className="flex gap-1 mt-1 ml-1 md:mt-0">
+                                            <div className="inline-flex items-center uppercase font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bgDev text-[#2D6BFF] hover:bg-[#0E0E0E] border border-[#2D6BFF]/50 rounded-full text-xs px-2 md:px-3 py-0.5">Creator</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Tính phần trăm holder nếu có dữ liệu */}
+                            {token.circulatingSupply && token.totalSupply && !isNaN(Number(token.circulatingSupply)) && !isNaN(Number(token.totalSupply)) ? (
+                                <span className="text-sm md:text-base text-white font-semibold">{((Number(token.circulatingSupply) / Number(token.totalSupply)) * 100).toFixed(2)}%</span>
+                            ) : null}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
