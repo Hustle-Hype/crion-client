@@ -342,7 +342,7 @@ export default function TokenDetailPage() {
                         <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Holders count:</p><p className="text-[12px] text-white font-medium">1</p></div>
                     </div>
                 </div>
-                )}
+
             </div>
             {/* Right/Sidebar section */}
             <div className="lg:col-span-1 space-y-4 md:space-y-6">
