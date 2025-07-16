@@ -20,10 +20,10 @@ const getRealValue = (value: string | number, decimals: number, isTime?: boolean
     if (isTime) {
         // For seconds, show in hours/days if large
         const sec = Number(value);
-        if (sec < 60) return `${sec} giây`;
-        if (sec < 3600) return `${(sec / 60).toFixed(2)} phút`;
-        if (sec < 86400) return `${(sec / 3600).toFixed(2)} giờ`;
-        return `${(sec / 86400).toFixed(2)} ngày`;
+        if (sec < 60) return `${sec} seconds`;
+        if (sec < 3600) return `${(sec / 60).toFixed(2)} minutes`;
+        if (sec < 86400) return `${(sec / 3600).toFixed(2)} hours`;
+        return `${(sec / 86400).toFixed(2)} days`;
     }
     const num = Number(value) / Math.pow(10, Number(decimals));
     if (isNaN(num)) return '';
@@ -114,8 +114,8 @@ export default function SimpleCreateTokenPage() {
             for (const field of requiredFields) {
                 if (!formData[field as keyof TokenFormData]) {
                     toast({
-                        title: "Thiếu thông tin",
-                        description: "Vui lòng nhập đủ thông tin tài sản.",
+                        title: "Missing information",
+                        description: "Please fill in all required asset information.",
                         variant: "destructive",
                     });
                     return;
@@ -131,7 +131,7 @@ export default function SimpleCreateTokenPage() {
         if (!connectedWallet.connected || !connectedWallet.account) {
             toast({
                 title: "Wallet connection required",
-                description: "Vui lòng kết nối ví trước khi tạo token.",
+                description: "Please connect your wallet before creating a token.",
                 variant: "destructive",
             });
             return;
@@ -171,9 +171,9 @@ export default function SimpleCreateTokenPage() {
             const response = await safeWallet.safeSignAndSubmitTransaction(entryFunctionPayload);
             if (response?.hash) {
                 toast({
-                    title: "Tạo token thành công!",
+                    title: "Token created successfully!",
                     description: (
-                        <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Xem trên Explorer</a>
+                        <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">View on Explorer</a>
                     ),
                 });
                 setFormData({
@@ -201,12 +201,12 @@ export default function SimpleCreateTokenPage() {
                 setStep(0);
             }
         } catch (error: any) {
-            let desc = "Có lỗi xảy ra khi tạo token.";
+            let desc = "An error occurred while creating the token.";
             if (error?.message) {
                 desc = typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
             }
             toast({
-                title: "Tạo token thất bại",
+                title: "Token creation failed",
                 description: desc,
                 variant: "destructive",
             });
@@ -223,7 +223,7 @@ export default function SimpleCreateTokenPage() {
     ];
 
     return (
-        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] pt-28 pb-10 lg:pb-20 min-h-[calc(100vh-200px)]">
+        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] pt-28 pb-10 lg:pb-10 min-h-[calc(100vh-200px)]">
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Stepper */}
                 <div className="w-full lg:w-[500px] flex justify-center lg:justify-start">
@@ -315,7 +315,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Total Supply
                                         {formData.totalSupply && formData.decimals !== undefined && !isNaN(Number(formData.totalSupply)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.totalSupply, formData.decimals)} {formData.symbol || ''})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.totalSupply, formData.decimals)} {formData.symbol || ''})</span>
                                         }
                                     </label>
                                     <Input name="totalSupply" value={formData.totalSupply} onChange={handleInputChange} type="number" placeholder="e.g. 1000000000000000" />
@@ -324,7 +324,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Mint Amount (K)
                                         {formData.mintAmount && formData.decimals !== undefined && !isNaN(Number(formData.mintAmount)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.mintAmount, formData.decimals)} {formData.symbol || ''})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.mintAmount, formData.decimals)} {formData.symbol || ''})</span>
                                         }
                                     </label>
                                     <Input name="mintAmount" value={formData.mintAmount} onChange={handleInputChange} type="number" placeholder="e.g. 100" />
@@ -333,7 +333,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Buy Fee
                                         {formData.buyFee && formData.decimals !== undefined && !isNaN(Number(formData.buyFee)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.buyFee, formData.decimals)} {formData.symbol || ''})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.buyFee, formData.decimals)} {formData.symbol || ''})</span>
                                         }
                                     </label>
                                     <Input name="buyFee" value={formData.buyFee} onChange={handleInputChange} type="number" placeholder="e.g. 300" />
@@ -373,7 +373,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Backing Ratio
                                         {formData.backingRatio && formData.decimals !== undefined && !isNaN(Number(formData.backingRatio)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.backingRatio, formData.decimals)} {formData.symbol || ''})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.backingRatio, formData.decimals)} {formData.symbol || ''})</span>
                                         }
                                     </label>
                                     <Input name="backingRatio" value={formData.backingRatio} onChange={handleInputChange} type="number" placeholder="e.g. 5000" />
@@ -382,7 +382,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Withdrawal Limit
                                         {formData.withdrawalLimit && formData.decimals !== undefined && !isNaN(Number(formData.withdrawalLimit)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.withdrawalLimit, formData.decimals)} {formData.symbol || ''})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.withdrawalLimit, formData.decimals)} {formData.symbol || ''})</span>
                                         }
                                     </label>
                                     <Input name="withdrawalLimit" value={formData.withdrawalLimit} onChange={handleInputChange} type="number" placeholder="e.g. 1000" />
@@ -391,7 +391,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Withdrawal Cooldown
                                         {formData.withdrawalCooldown && !isNaN(Number(formData.withdrawalCooldown)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.withdrawalCooldown, formData.decimals, true)})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.withdrawalCooldown, formData.decimals, true)})</span>
                                         }
                                     </label>
                                     <Input name="withdrawalCooldown" value={formData.withdrawalCooldown} onChange={handleInputChange} type="number" placeholder="e.g. 86400 (seconds)" />
@@ -400,7 +400,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Graduation Threshold
                                         {formData.graduationThreshold && formData.decimals !== undefined && !isNaN(Number(formData.graduationThreshold)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.graduationThreshold, formData.decimals)} {formData.symbol || ''})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.graduationThreshold, formData.decimals)} {formData.symbol || ''})</span>
                                         }
                                     </label>
                                     <Input name="graduationThreshold" value={formData.graduationThreshold} onChange={handleInputChange} type="number" placeholder="e.g. 100000000" />
@@ -409,7 +409,7 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
                                         Graduation Target
                                         {formData.graduationTarget && formData.decimals !== undefined && !isNaN(Number(formData.graduationTarget)) &&
-                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.graduationTarget, formData.decimals)} {formData.symbol || ''})</span>
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.graduationTarget, formData.decimals)} {formData.symbol || ''})</span>
                                         }
                                     </label>
                                     <Input name="graduationTarget" value={formData.graduationTarget} onChange={handleInputChange} type="number" placeholder="e.g. 1000000000" />
