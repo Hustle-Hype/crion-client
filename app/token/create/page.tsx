@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -9,8 +10,25 @@ import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
 import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { toast } from "@/hooks/use-toast";
 
+
 const CONTRACT_ADDRESS = "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
 const MODULE_NAME = "fa_factory";
+
+// Helper to show real-world value (divide by 10^decimals)
+const getRealValue = (value: string | number, decimals: number, isTime?: boolean): string => {
+    if (!value || isNaN(Number(value))) return '';
+    if (isTime) {
+        // For seconds, show in hours/days if large
+        const sec = Number(value);
+        if (sec < 60) return `${sec} seconds`;
+        if (sec < 3600) return `${(sec / 60).toFixed(2)} minutes`;
+        if (sec < 86400) return `${(sec / 3600).toFixed(2)} hours`;
+        return `${(sec / 86400).toFixed(2)} days`;
+    }
+    const num = Number(value) / Math.pow(10, Number(decimals));
+    if (isNaN(num)) return '';
+    return num.toLocaleString(undefined, { maximumFractionDigits: Number(decimals) });
+};
 
 interface TokenFormData {
     symbol: string;
@@ -37,7 +55,30 @@ interface TokenFormData {
 }
 
 
+
 export default function SimpleCreateTokenPage() {
+    // Upload image handler
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append("image", file);
+        try {
+            const res = await fetch("https://crion.onrender.com/api/v1/issuer/upload/image", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.status === 200 && data.data?.url) {
+                setFormData(prev => ({ ...prev, iconUrl: data.data.url }));
+                toast({ title: "Upload thành công", description: "Ảnh đã được tải lên!", variant: "default" });
+            } else {
+                toast({ title: "Upload thất bại", description: data.message || "Không thể upload ảnh", variant: "destructive" });
+            }
+        } catch (err) {
+            toast({ title: "Lỗi upload", description: "Không thể upload ảnh", variant: "destructive" });
+        }
+    };
     const connectedWallet = useConnectedWallet();
     const safeWallet = useSafeWallet();
     const [step, setStep] = useState(0); // 0: Asset Info, 1: Social Links, 2: Review
@@ -95,8 +136,8 @@ export default function SimpleCreateTokenPage() {
             for (const field of requiredFields) {
                 if (!formData[field as keyof TokenFormData]) {
                     toast({
-                        title: "Thiếu thông tin",
-                        description: "Vui lòng nhập đủ thông tin tài sản.",
+                        title: "Missing information",
+                        description: "Please fill in all required asset information.",
                         variant: "destructive",
                     });
                     return;
@@ -112,7 +153,7 @@ export default function SimpleCreateTokenPage() {
         if (!connectedWallet.connected || !connectedWallet.account) {
             toast({
                 title: "Wallet connection required",
-                description: "Vui lòng kết nối ví trước khi tạo token.",
+                description: "Please connect your wallet before creating a token.",
                 variant: "destructive",
             });
             return;
@@ -152,9 +193,9 @@ export default function SimpleCreateTokenPage() {
             const response = await safeWallet.safeSignAndSubmitTransaction(entryFunctionPayload);
             if (response?.hash) {
                 toast({
-                    title: "Tạo token thành công!",
+                    title: "Token created successfully!",
                     description: (
-                        <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Xem trên Explorer</a>
+                        <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">View on Explorer</a>
                     ),
                 });
                 setFormData({
@@ -182,12 +223,12 @@ export default function SimpleCreateTokenPage() {
                 setStep(0);
             }
         } catch (error: any) {
-            let desc = "Có lỗi xảy ra khi tạo token.";
+            let desc = "An error occurred while creating the token.";
             if (error?.message) {
                 desc = typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
             }
             toast({
-                title: "Tạo token thất bại",
+                title: "Token creation failed",
                 description: desc,
                 variant: "destructive",
             });
@@ -204,7 +245,7 @@ export default function SimpleCreateTokenPage() {
     ];
 
     return (
-        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] pt-28 pb-10 lg:pb-20 min-h-[calc(100vh-200px)]">
+        <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] pt-10 pb-10 lg:pb-10 min-h-[calc(100vh-200px)]">
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Stepper */}
                 <div className="w-full lg:w-[500px] flex justify-center lg:justify-start">
@@ -277,8 +318,14 @@ export default function SimpleCreateTokenPage() {
                                     <Input name="symbol" value={formData.symbol} onChange={handleInputChange} maxLength={50} placeholder="e.g. RETK" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Token Icon URL</label>
-                                    <Input name="iconUrl" value={formData.iconUrl} onChange={handleInputChange} placeholder="e.g. https://domain.com/token.png" />
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Token Icon</label>
+                                    <div className="flex flex-col gap-2">
+                                        <Input name="iconUrl" value={formData.iconUrl} onChange={handleInputChange} placeholder="e.g. https://domain.com/token.png" />
+                                        <input type="file" accept="image/*" onChange={handleImageUpload} className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        {formData.iconUrl && (
+                                            <img src={formData.iconUrl} alt="Token Icon Preview" className="w-20 h-20 object-cover rounded mt-2 border border-white/10" />
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Project URL</label>
@@ -293,15 +340,30 @@ export default function SimpleCreateTokenPage() {
                                     <Input name="decimals" value={formData.decimals} onChange={handleInputChange} type="number" min={0} max={18} placeholder="e.g. 8" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Total Supply</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Total Supply
+                                        {formData.totalSupply && formData.decimals !== undefined && !isNaN(Number(formData.totalSupply)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.totalSupply, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="totalSupply" value={formData.totalSupply} onChange={handleInputChange} type="number" placeholder="e.g. 1000000000000000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Mint Amount (K)</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Mint Amount (K)
+                                        {formData.mintAmount && formData.decimals !== undefined && !isNaN(Number(formData.mintAmount)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.mintAmount, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="mintAmount" value={formData.mintAmount} onChange={handleInputChange} type="number" placeholder="e.g. 100" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Buy Fee</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Buy Fee
+                                        {formData.buyFee && formData.decimals !== undefined && !isNaN(Number(formData.buyFee)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.buyFee, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="buyFee" value={formData.buyFee} onChange={handleInputChange} type="number" placeholder="e.g. 300" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
@@ -336,23 +398,48 @@ export default function SimpleCreateTokenPage() {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Backing Ratio</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Backing Ratio
+                                        {formData.backingRatio && formData.decimals !== undefined && !isNaN(Number(formData.backingRatio)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.backingRatio, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="backingRatio" value={formData.backingRatio} onChange={handleInputChange} type="number" placeholder="e.g. 5000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Withdrawal Limit</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Withdrawal Limit
+                                        {formData.withdrawalLimit && formData.decimals !== undefined && !isNaN(Number(formData.withdrawalLimit)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.withdrawalLimit, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="withdrawalLimit" value={formData.withdrawalLimit} onChange={handleInputChange} type="number" placeholder="e.g. 1000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Withdrawal Cooldown</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Withdrawal Cooldown
+                                        {formData.withdrawalCooldown && !isNaN(Number(formData.withdrawalCooldown)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.withdrawalCooldown, formData.decimals, true)})</span>
+                                        }
+                                    </label>
                                     <Input name="withdrawalCooldown" value={formData.withdrawalCooldown} onChange={handleInputChange} type="number" placeholder="e.g. 86400 (seconds)" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Graduation Threshold</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Graduation Threshold
+                                        {formData.graduationThreshold && formData.decimals !== undefined && !isNaN(Number(formData.graduationThreshold)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.graduationThreshold, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="graduationThreshold" value={formData.graduationThreshold} onChange={handleInputChange} type="number" placeholder="e.g. 100000000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Graduation Target</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Graduation Target
+                                        {formData.graduationTarget && formData.decimals !== undefined && !isNaN(Number(formData.graduationTarget)) &&
+                                            <span className="ml-2 text-white/50">(Example: {getRealValue(formData.graduationTarget, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="graduationTarget" value={formData.graduationTarget} onChange={handleInputChange} type="number" placeholder="e.g. 1000000000" />
                                 </div>
                             </div>

@@ -4,7 +4,9 @@ import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import { useParams } from "next/navigation";
+
 import { useCallback, useEffect, useState } from "react";
+import { getIssuerScore } from "@/lib/issuer-score";
 
 const CONTRACT_ADDRESS = "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
 const MODULE_NAME = "fa_factory";
@@ -74,7 +76,23 @@ export interface TokenInfo {
     saleStatus: string;
 }
 
+// Simple skeleton component (more rounded)
+function Skeleton({ className = "" }: { className?: string }) {
+    return <div className={`animate-pulse bg-[#232323] rounded-xl ${className}`} />;
+}
+
 export default function TokenDetailPage() {
+    // Copy to clipboard helper
+    // Copy to clipboard helper with local copied state
+    const [copiedKey, setCopiedKey] = useState<string | null>(null);
+    function handleCopy(text: string, key: string) {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedKey(key);
+        setTimeout(() => {
+            setCopiedKey(current => (current === key ? null : current));
+        }, 1200);
+    }
     const params = useParams();
     const symbol = typeof params?.symbol === 'string' ? params.symbol : Array.isArray(params?.symbol) ? params.symbol[0] : '';
     const [token, setToken] = useState<TokenInfo | null>(null);
@@ -83,11 +101,68 @@ export default function TokenDetailPage() {
     const [sellAmount, setSellAmount] = useState("");
     const [buying, setBuying] = useState(false);
     const [selling, setSelling] = useState(false);
-    // Removed trade history logic
+    const [issuerScore, setIssuerScore] = useState<number | null>(null);
     // Add state for buy/sell tab
-    const [buyingTab, setBuyingTab] = useState<'buy' | 'sell'>('buy');
+    const [buyingTab, setBuyingTab] = useState<'buy' | 'sell'>("buy");
     const connectedWallet = useConnectedWallet();
     const { safeSignAndSubmitTransaction } = useSafeWallet();
+    // State for user token balance and Aptos balance
+    const [userTokenBalance, setUserTokenBalance] = useState<string>("0");
+    const [aptosInWalletUser, setAptosInWalletUser] = useState<string>("0");
+    // Fetch user token balance and Aptos balance
+    // Helper: parse balance string to number
+    function parseBalance(balance: string) {
+        if (!balance) return 0;
+        return Number(balance.replace(/,/g, ''));
+    }
+
+    // Handlers for quick amount buttons
+    function handleBuyQuickAmount(val: 'reset' | '0.1' | '0.2' | '0.5' | 'max') {
+        if (val === 'reset') setBuyAmount('');
+        else if (val === 'max') setBuyAmount(parseBalance(aptosInWalletUser).toString());
+        else setBuyAmount(val);
+    }
+    function handleSellQuickAmount(val: 'reset' | '0.1' | '0.2' | '0.5' | 'max') {
+        if (val === 'reset') setSellAmount('');
+        else if (val === 'max') setSellAmount(parseBalance(userTokenBalance).toString());
+        else setSellAmount(val);
+    }
+    useEffect(() => {
+        const fetchBalances = async () => {
+            if (!connectedWallet.connected || !connectedWallet.account) {
+                setUserTokenBalance("0");
+                setAptosInWalletUser("0");
+                return;
+            }
+            // Fetch token balance
+            if (token) {
+                try {
+                    const tokenType = `${token.creator}::${MODULE_NAME}::${token.symbol}`;
+                    // Suppress TS error: resourceType is dynamic, not a static template literal
+                    const resourceType = `0x1::coin::CoinStore<${tokenType}>`;
+                    const res = await aptos.getAccountResource({
+                        accountAddress: connectedWallet.account.address,
+                        resourceType: resourceType as any // Suppress TS2322
+                    });
+                    const raw = res?.data?.coin?.value || "0";
+                    const decimals = token.decimals || 6;
+                    const value = Number(raw) / Math.pow(10, decimals);
+                    setUserTokenBalance(value.toLocaleString(undefined, { maximumFractionDigits: 6 }));
+                } catch {
+                    setUserTokenBalance("0");
+                }
+            }
+            // Fetch Aptos (APT) balance using getAccountAPTAmount for accuracy
+            try {
+                const res = await aptos.getAccountAPTAmount({ accountAddress: connectedWallet.account.address });
+                const apt = Number(res) / 1e8;
+                setAptosInWalletUser(apt.toLocaleString(undefined, { maximumFractionDigits: 4 }));
+            } catch {
+                setAptosInWalletUser("0");
+            }
+        };
+        fetchBalances();
+    }, [token, connectedWallet.connected, connectedWallet.account]);
 
     const fetchToken = useCallback(async () => {
         setLoading(true);
@@ -151,7 +226,21 @@ export default function TokenDetailPage() {
         }
     }, [symbol]);
 
+
+
+    // Scroll to top on mount
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, []);
+
     useEffect(() => { fetchToken(); }, [fetchToken]);
+
+    // Fetch issuer trust score when token loaded
+    useEffect(() => {
+        if (token?.creator) {
+            getIssuerScore(token.creator).then(setIssuerScore);
+        }
+    }, [token?.creator]);
 
     // Removed trade history effect
 
@@ -170,8 +259,13 @@ export default function TokenDetailPage() {
             // Arguments: address, string, u64
             const creatorAddress = token.creator.startsWith('0x') ? token.creator : `0x${token.creator}`;
             const symbolString = token.symbol;
-            // Convert buyAmount to integer string (u64)
-            const amountU64 = buyAmount.includes('.') ? buyAmount.split('.')[0] : buyAmount;
+            // Convert buyAmount to integer string (u64) with decimals
+            let amountU64 = "0";
+            try {
+                const decimals = token.decimals || 6;
+                const n = parseFloat(buyAmount);
+                amountU64 = Math.floor(n * Math.pow(10, decimals)).toString();
+            } catch { amountU64 = "0"; }
             const payload = {
                 type: "entry_function_payload",
                 function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
@@ -222,8 +316,13 @@ export default function TokenDetailPage() {
             // Arguments: address, string, u64
             const creatorAddress = token.creator.startsWith('0x') ? token.creator : `0x${token.creator}`;
             const symbolString = token.symbol;
-            // Convert sellAmount to integer string (u64)
-            const amountU64 = sellAmount.includes('.') ? sellAmount.split('.')[0] : sellAmount;
+            // Convert sellAmount to integer string (u64) with decimals
+            let amountU64 = "0";
+            try {
+                const decimals = token.decimals || 6;
+                const n = parseFloat(sellAmount);
+                amountU64 = Math.floor(n * Math.pow(10, decimals)).toString();
+            } catch { amountU64 = "0"; }
             const payload = {
                 type: "entry_function_payload",
                 function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::sell_tokens`,
@@ -259,7 +358,38 @@ export default function TokenDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-10 text-center">Đang tải thông tin token...</div>;
+    if (loading) return (
+        <div className="max-w-7xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left/Main section skeleton */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+                <div className="flex items-stretch p-3 gap-6">
+                    <div className="flex flex-col gap-2.5">
+                        <Skeleton className="w-[140px] h-[140px]" />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-3">
+                        <div className="flex flex-col gap-4 justify-between h-full">
+                            <div className="flex flex-col gap-2">
+                                <Skeleton className="h-8 w-1/2 mb-2" />
+                                <Skeleton className="h-4 w-1/3 mb-2" />
+                                <Skeleton className="h-4 w-2/3" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-col gap-4 md:gap-2">
+                    <Skeleton className="h-6 w-1/3 mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-2" />
+                </div>
+            </div>
+            {/* Right/Sidebar skeleton */}
+            <div className="lg:col-span-1 space-y-4 md:space-y-6">
+                <Skeleton className="h-24 w-full mb-4" />
+                <Skeleton className="h-40 w-full mb-4" />
+                <Skeleton className="h-24 w-full mb-4" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        </div>
+    );
     if (!token) return <div className="p-10 text-center">Không tìm thấy token.</div>;
 
     return (
@@ -288,12 +418,28 @@ export default function TokenDetailPage() {
                                     <div className="bg-[#292828] rounded-full max-h-8 py-2 pl-4 flex items-center gap-2 justify-between">
                                         <div className="flex items-center gap-1 text-white text-sm font-normal">
                                             <span className="font-medium whitespace-nowrap">Token address:</span>
-                                            <span>{token.creator.slice(0, 4)}...{token.creator.slice(-3)}</span>
+                                            <span className="cursor-pointer hover:underline" onClick={() => handleCopy(token.creator, 'token-address')} title="Sao chép địa chỉ token creator">{token.creator.slice(0, 4)}...{token.creator.slice(-3)}</span>
                                         </div>
-                                        <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none text-tiny gap-2 rounded-full px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-8 bg-[#313131] h-[28px] w-[28px] transition-colors">
-                                            {/* Copy icon */}
-                                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white/64"><path d="M5 9.16666C5 6.80963 5 5.63112 5.73223 4.89889C6.46447 4.16666 7.64298 4.16666 10 4.16666H12.5C14.857 4.16666 16.0355 4.16666 16.7678 4.89889C17.5 5.63112 17.5 6.80963 17.5 9.16666V13.3333C17.5 15.6903 17.5 16.8689 16.7678 17.6011C16.0355 18.3333 14.857 18.3333 12.5 18.3333H10C7.64298 18.3333 6.46447 18.3333 5.73223 17.6011C5 16.8689 5 15.6903 5 13.3333V9.16666Z" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path><path d="M5 15.8333C3.61929 15.8333 2.5 14.714 2.5 13.3333V8.33332C2.5 5.19063 2.5 3.61928 3.47631 2.64297C4.45262 1.66666 6.02397 1.66666 9.16667 1.66666H12.5C13.8807 1.66666 15 2.78594 15 4.16666" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path></svg>
-                                        </button>
+                                        <div className="relative flex items-center">
+                                            <button
+                                                type="button"
+                                                tabIndex={0}
+                                                onClick={() => handleCopy(token.creator, 'token-address')}
+                                                className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none text-tiny gap-2 rounded-full px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-8 bg-[#313131] h-[32px] w-[32px] transition-colors border border-white/20 hover:bg-[#232323] active:scale-95"
+                                                title="Sao chép địa chỉ token creator"
+                                            >
+                                                {/* New copy icon: checkmark if copied, else a different icon (e.g. clipboard-check) */}
+                                                {copiedKey === 'token-address' ? (
+                                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-green-400"><path d="M5 10.5l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                ) : (
+                                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-white/64"><rect x="4" y="4" width="12" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" /><path d="M8 8h4v4H8z" fill="currentColor" fillOpacity=".3" /></svg>
+                                                )}
+                                            </button>
+                                            {/* Tooltip */}
+                                            {copiedKey === 'token-address' && (
+                                                <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#232323] text-white text-xs px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-10">Copied!</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex justify-between items-center">
@@ -314,7 +460,11 @@ export default function TokenDetailPage() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[#7E7E7E] text-[12px] font-normal">Created Date:</span>
-                                        <img width="22" height="22" alt="" src="/icons/ic-time.svg" />
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9FA3A0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="4" stroke="#9FA3A0" strokeWidth="2" />
+                                            <path d="M16 2v4M8 2v4M3 10h18" stroke="#9FA3A0" strokeWidth="2" />
+                                            <circle cx="16" cy="16" r="2" fill="#9FA3A0" />
+                                        </svg>
                                         <span className="text-white text-[14px] font-medium">July 14, 2025</span>
                                     </div>
                                 </div>
@@ -349,17 +499,29 @@ export default function TokenDetailPage() {
                 {/* Price, Mcap, Volume */}
                 <div className="bg-[#181818] shadowInput rounded-xl border">
                     <div className="border-b border-b-[#313131] flex items-center">
-                        <div className="flex flex-col gap-2 w-full p-3 h-full border-r-2 border-r-[#313131]">
-                            <div className="flex justify-between items-center"><p className="text-[12px] font-normal text-white/60 uppercase">Price</p><img width="20" height="20" alt="" src="/icons/ic-dollar-circle.svg" /></div>
+                        {/* PRICE */}
+                        <div className="flex flex-col w-full p-3 h-full border-r-2 border-r-[#313131] items-start justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                                <span className="text-[12px] font-normal text-white/60 uppercase">Price</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#E5E7EB" fontFamily="Arial">$</text></svg>
+                            </div>
                             <div className="text-[22px] font-medium text-white"><span>{formatNumberCompact(token.currentPriceUsd)}</span></div>
                         </div>
-                        <div className="flex flex-col gap-2 w-full p-3 border-r-2 border-r-[#313131] h-full">
-                            <div className="flex justify-between items-center"><p className="text-[12px] font-normal text-white/60 uppercase">Mcap</p><img width="20" height="20" alt="" src="/icons/ic-money-send.svg" /></div>
-                            <p className="md:text-[22px] text-[16px] font-medium text-white">{formatNumberCompact(token.marketCap)}</p>
+                        {/* MCAP */}
+                        <div className="flex flex-col w-full p-3 h-full border-r-2 border-r-[#313131] items-start justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                                <span className="text-[12px] font-normal text-white/60 uppercase">Mcap</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#E5E7EB" fontFamily="Arial">$</text><path d="M16 8l2 2-6 6" stroke="#E5E7EB" strokeWidth="1" /></svg>
+                            </div>
+                            <div className="text-[22px] font-medium text-white"><span>{formatNumberCompact(token.marketCap)}</span></div>
                         </div>
-                        <div className="flex flex-col gap-2 w-full p-3 h-full">
-                            <div className="flex justify-between items-center"><p className="text-[12px] font-normal text-white/60 uppercase">Volume 24h</p><img width="20" height="20" alt="" src="/icons/ic-bar-chart.svg" /></div>
-                            <p className="md:text-[22px] text-[16px] font-medium text-white">0.00</p>
+                        {/* VOLUME 24H */}
+                        <div className="flex flex-col w-full p-3 h-full items-start justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                                <span className="text-[12px] font-normal text-white/60 uppercase">Volume 24h</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="10" width="3" height="8" rx="1.5" /><rect x="9" y="6" width="3" height="12" rx="1.5" /><rect x="15" y="13" width="3" height="5" rx="1.5" /></svg>
+                            </div>
+                            <div className="text-[22px] font-medium text-white"><span>0.00</span></div>
                         </div>
                     </div>
                     {/* Buy/Sell UI */}
@@ -387,13 +549,13 @@ export default function TokenDetailPage() {
                                         <div className="flex items-center gap-2"><p className="text-[12px] font-normal text-white">{token.symbol}</p><img width="20" height="20" crossOrigin="anonymous" className="rounded-full" alt="" src={token.iconUrl || "/firestarter-nativetoken.png"} /></div>
                                     </div>
                                 </div>
-                                <div className="flex gap-2"><div className="text-[12px] font-normal text-white/60">Balance: </div><div className="text-[12px] font-normal text-white"><div className="text-[12px] font-normal text-white">0 {token.symbol}</div></div></div>
+                                <div className="flex gap-2"><div className="text-[12px] font-normal text-white/60">Balance: </div><div className="text-[12px] font-normal text-white"><div className="text-[12px] font-normal text-white">{aptosInWalletUser} APTOS</div></div></div>
                                 <div className="flex items-center pb-3 gap-[6px]">
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">Reset</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.1 {token.symbol}</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.2 {token.symbol}</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.5 {token.symbol}</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">MAX</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleBuyQuickAmount('reset')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[40px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">Reset</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleBuyQuickAmount('0.1')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">0.1 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleBuyQuickAmount('0.2')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">0.2 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleBuyQuickAmount('0.5')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">0.5 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleBuyQuickAmount('max')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">MAX</p></button>
                                 </div>
                                 <button type="button" className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none px-4 min-w-20 gap-2 transition-transform-colors-opacity motion-reduce:transition-none w-full text-center hover:opacity-85 h-12 rounded-full text-white font-medium border-b-2 transition-transform active:scale-[98%] text-base bg-[#4BD467] border-[#27AC4B]" style={{ boxShadow: "rgba(54, 253, 81, 0.44) 0px 3px 0px 0px" }} onClick={handleBuy} disabled={buying}>{buying ? "Đang gửi..." : "Buy"}</button>
                             </>
@@ -408,13 +570,13 @@ export default function TokenDetailPage() {
                                         <div className="flex items-center gap-2"><p className="text-[12px] font-normal text-white">{token.symbol}</p><img width="20" height="20" crossOrigin="anonymous" className="rounded-full" alt="" src={token.iconUrl || "/firestarter-nativetoken.png"} /></div>
                                     </div>
                                 </div>
-                                <div className="flex gap-2"><div className="text-[12px] font-normal text-white/60">Balance: </div><div className="text-[12px] font-normal text-white"><div className="text-[12px] font-normal text-white">0 {token.symbol}</div></div></div>
+                                <div className="flex gap-2"><div className="text-[12px] font-normal text-white/60">Balance: </div><div className="text-[12px] font-normal text-white"><div className="text-[12px] font-normal text-white">{userTokenBalance} {token.symbol}</div></div></div>
                                 <div className="flex items-center pb-3 gap-[6px]">
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">Reset</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.1 {token.symbol}</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.2 {token.symbol}</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none min-w-20 h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] w-max px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">0.5 {token.symbol}</p></button>
-                                    <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-10 text-small gap-2 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[57px] w-[57px] px-3 max-h-[24px] rounded-2xl"><p className="text-[12px] font-normal uppercase text-[#FFFFFF8F]">MAX</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleSellQuickAmount('reset')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[40px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">Reset</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleSellQuickAmount('0.1')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">0.1 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleSellQuickAmount('0.2')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">0.2 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleSellQuickAmount('0.5')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">0.5 {token.symbol}</p></button>
+                                    <button type="button" tabIndex={0} onClick={() => handleSellQuickAmount('max')} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none h-8 text-xs gap-1 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground bg-[#292828] min-w-[48px] px-2 max-h-[24px] rounded-2xl"><p className="text-[11px] font-normal uppercase text-[#FFFFFF8F]">MAX</p></button>
                                 </div>
                                 <button type="button" className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none px-4 min-w-20 gap-2 transition-transform-colors-opacity motion-reduce:transition-none w-full text-center hover:opacity-85 h-12 rounded-full text-white font-medium border-b-2 transition-transform active:scale-[98%] text-base bg-[#F75C5E] border-[#D73B3E]" style={{ boxShadow: "rgba(253, 54, 81, 0.44) 0px 3px 0px 0px" }} onClick={handleSell} disabled={selling}>{selling ? "Đang gửi..." : "Sell"}</button>
                             </>
@@ -431,15 +593,35 @@ export default function TokenDetailPage() {
                     </div>
                     <div className="flex items-end justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="text-6xl font-bold text-[#4BD467]">34</div>
-                            <div className="flex flex-col gap-2"><span className="text-white/60 text-base">Risky</span><div className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-gray-600 to-gray-700 text-white">Basic Tier</div></div>
+                            <div className="text-6xl font-bold text-[#4BD467]">
+                                {issuerScore !== null ? issuerScore : <span className="text-white/40 text-2xl">...</span>}
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <span className="text-white/60 text-base">{issuerScore !== null ? (issuerScore >= 80 ? "Excellent" : issuerScore >= 50 ? "Good" : issuerScore >= 20 ? "Risky" : "New") : ""}</span>
+                                <div className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-gray-600 to-gray-700 text-white">Basic Tier</div>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <img alt={token.creator} className="size-[24px] rounded-md object-cover w-6 h-6" crossOrigin="anonymous" src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${token.creator}&scale=70`} />
-                            <span className="text-white font-medium text-xs md:text-sm tracking-[-0.02em] leading-[1.5em]">{token.creator.slice(0, 4)}...{token.creator.slice(-3)}</span>
-                            <button type="button" tabIndex={0} className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none text-tiny gap-2 rounded-small px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-8 bg-[#313131] h-[28px] w-[28px] transition-colors">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white/64"><path d="M5 9.16666C5 6.80963 5 5.63112 5.73223 4.89889C6.46447 4.16666 7.64298 4.16666 10 4.16666H12.5C14.857 4.16666 16.0355 4.16666 16.7678 4.89889C17.5 5.63112 17.5 6.80963 17.5 9.16666V13.3333C17.5 15.6903 17.5 16.8689 16.7678 17.6011C16.0355 18.3333 14.857 18.3333 12.5 18.3333H10C7.64298 18.3333 6.46447 18.3333 5.73223 17.6011C5 16.8689 5 15.6903 5 13.3333V9.16666Z" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path><path d="M5 15.8333C3.61929 15.8333 2.5 14.714 2.5 13.3333V8.33332C2.5 5.19063 2.5 3.61928 3.47631 2.64297C4.45262 1.66666 6.02397 1.66666 9.16667 1.66666H12.5C13.8807 1.66666 15 2.78594 15 4.16666" stroke="white" strokeOpacity="0.64" strokeWidth="1.5"></path></svg>
-                            </button>
+                            <span className="text-white font-medium text-xs md:text-sm tracking-[-0.02em] leading-[1.5em] cursor-pointer hover:underline" onClick={() => handleCopy(token.creator, 'trust-creator')} title="Sao chép địa chỉ creator">{token.creator.slice(0, 4)}...{token.creator.slice(-3)}</span>
+                            <div className="relative flex items-center">
+                                <button
+                                    type="button"
+                                    tabIndex={0}
+                                    onClick={() => handleCopy(token.creator, 'trust-creator')}
+                                    className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none text-tiny gap-2 rounded-full px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-8 bg-[#313131] h-[32px] w-[32px] transition-colors border border-white/20 hover:bg-[#232323] active:scale-95"
+                                    title="Sao chép địa chỉ creator"
+                                >
+                                    {copiedKey === 'trust-creator' ? (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-green-400"><path d="M5 10.5l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                    ) : (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-white/64"><rect x="4" y="4" width="12" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" /><path d="M8 8h4v4H8z" fill="currentColor" fillOpacity=".3" /></svg>
+                                    )}
+                                </button>
+                                {copiedKey === 'trust-creator' && (
+                                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#232323] text-white text-xs px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-10">Copied!</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
