@@ -1,3 +1,10 @@
+// Format number to compact string (e.g., 48.5M)
+function formatNumberCompact(value: string | number, decimals = 2): string {
+    if (value === undefined || value === null || value === '') return '0';
+    const num = typeof value === 'number' ? value : Number(value);
+    if (isNaN(num)) return value.toString();
+    return num.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: decimals });
+}
 import React, { useState, useRef } from "react";
 import "@/styles/custom-scrollbar.css";
 import "@/styles/custom-scrollbar.css";
@@ -205,15 +212,20 @@ export default function MostIgnitedSection({ tokens = [] }: { tokens: TokenInfo[
                             // (You may want to extract this as a shared component for DRY)
                             const threshold = Number(token.graduationThreshold);
                             const target = Number(token.graduationTarget);
-                            const circulating = Number(token.circulatingSupply);
+                            const reserve = Number(token.reserve);
                             let progress = 0;
                             let progressText = "0%";
                             if (target > threshold) {
-                                progress = (circulating - threshold) / (target - threshold);
-                                progress = Math.max(0, Math.min(1, progress));
+                                if (reserve <= threshold) {
+                                    progress = 0;
+                                } else if (reserve >= target) {
+                                    progress = 1;
+                                } else {
+                                    progress = (reserve - threshold) / (target - threshold);
+                                }
                                 progressText = (progress * 100).toFixed(2) + "%";
                             }
-                            const belowThreshold = circulating < threshold;
+                            const belowThreshold = reserve < threshold;
                             return (
                                 <a
                                     key={token.symbol + idx}
@@ -253,11 +265,11 @@ export default function MostIgnitedSection({ tokens = [] }: { tokens: TokenInfo[
                                             <div className="flex justify-between items-center">
                                                 <div className="flex flex-col gap-1">
                                                     <p className="text-[#707472] text-[12px] font-normal uppercase">Daily Volume</p>
-                                                    <p className="text-md font-medium text-white">${token.liquidity || '0.00'}</p>
+                                                    <p className="text-md font-medium text-white">{formatNumberCompact(token.liquidity)}</p>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <p className="text-[#707472] text-[12px] font-normal uppercase">MCap</p>
-                                                    <p className="text-md font-medium text-white">${token.marketCap || '0.00'}</p>
+                                                    <p className="text-md font-medium text-white">{formatNumberCompact(token.marketCap)}</p>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <p className="text-[#707472] text-[12px] font-normal uppercase">CREATED BY</p>
