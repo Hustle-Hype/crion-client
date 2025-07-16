@@ -33,7 +33,10 @@ export const HomeHeader = () => {
       >
         {/* Full width blurred bg khi scroll */}
         {isScrolled && (
-          <div className="absolute inset-0 w-full h-full bg-[#171a2005] backdrop-blur-md pointer-events-none z-0" />
+          <div className={
+            `absolute inset-0 w-full h-full bg-[#171a2005] backdrop-blur-md z-0` +
+            (menuState ? '' : ' pointer-events-none')
+          } />
         )}
         <div className="relative mx-auto  max-w-6xl px-6 lg:px-4 z-10">
           <div className="relative flex flex-wrap items-center justify-between gap-4 py-1 lg:gap-6">
@@ -56,7 +59,7 @@ export const HomeHeader = () => {
               </button>
             </div>
 
-            <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+            <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent z-30">
               <div className="hidden lg:block">
                 <ul className="flex gap-6 text-sm font-medium">
                   {menuItems.map((item, index) => (
@@ -78,6 +81,7 @@ export const HomeHeader = () => {
                       <Link
                         href={item.href}
                         className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                        onClick={() => setMenuState(false)}
                       >
                         <span>{item.name}</span>
                       </Link>
