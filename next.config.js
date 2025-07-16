@@ -28,7 +28,14 @@ const nextConfig = {
         '@aptos-labs/wallet-adapter-core',
         '@aptos-labs/ts-sdk',
     ],
-    // Remove experimental.esmExternals as it's not supported by Turbopack
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'www.lou1s.fun',
+            },
+        ],
+    },
 };
 
 module.exports = nextConfig;
