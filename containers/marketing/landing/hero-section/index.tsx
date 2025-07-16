@@ -19,7 +19,7 @@ export default function HeroSection() {
           <span className="text-primary">it&apos;s 2030</span>
         </h1>
         <p className="text-base sm:text-lg font-bold z-50 pointer-events-none text-center lg:text-left">
-          Smart scores. Clean UI. Zero BS.
+          Smart scores. Clean UI.
         </p>
         <Button variant="crion" className="w-fit" asChild>
           <Link href="/token/create">Tokenize Your Assets</Link>

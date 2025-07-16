@@ -1,3 +1,5 @@
+// Format number to compact string (e.g., 48.5M)
+
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
 import TokenTabs from "@/components/token/token-tab";
@@ -17,7 +19,12 @@ const aptosConfig = new AptosConfig({
     }
 });
 const aptos = new Aptos(aptosConfig);
-
+function formatNumberCompact(value: string | number, decimals = 2): string {
+    if (value === undefined || value === null || value === '') return '0';
+    const num = typeof value === 'number' ? value : Number(value);
+    if (isNaN(num)) return value.toString();
+    return num.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: decimals });
+}
 function decodeHexString(hexString: string | undefined | null): string {
     try {
         if (!hexString || typeof hexString !== 'string' || !hexString.startsWith('0x')) return hexString || '';
@@ -120,13 +127,19 @@ export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionPr
                     // Call get_full_token_info view function
                     let fullInfo;
                     try {
+                        const viewArgs = [creatorAddress, Array.from(new TextEncoder().encode(decodedSymbol))];
+                        console.log('Call get_full_token_info:', {
+                            function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::get_full_token_info`,
+                            args: viewArgs
+                        });
                         fullInfo = await aptos.view({
                             payload: {
                                 function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::get_full_token_info`,
                                 typeArguments: [],
-                                functionArguments: [creatorAddress, Array.from(new TextEncoder().encode(decodedSymbol))]
+                                functionArguments: viewArgs
                             }
                         });
+                        console.log('get_full_token_info result:', fullInfo);
                     } catch (e) {
                         continue;
                     }
@@ -161,6 +174,7 @@ export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionPr
                     });
                 } catch { }
             }
+            console.log('Fetched tokens:', fetchedTokens);
             setTokens(fetchedTokens);
         } catch (e) {
             toast({ title: "Error", description: "Failed to fetch tokens", variant: "destructive" });
@@ -323,11 +337,11 @@ export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionPr
                                     <div className="flex justify-between items-center">
                                         <div className="flex flex-col gap-1">
                                             <p className="text-[#707472] text-[12px] font-normal uppercase">Daily Volume</p>
-                                            <p className="text-md font-medium text-white">${token.liquidity || '0.00'}</p>
+                                            <p className="text-md font-medium text-white">${formatNumberCompact(token.liquidity)}</p>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <p className="text-[#707472] text-[12px] font-normal uppercase">MCap</p>
-                                            <p className="text-md font-medium text-white">${token.marketCap || '0.00'}</p>
+                                            <p className="text-md font-medium text-white">${formatNumberCompact(token.marketCap)}</p>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <p className="text-[#707472] text-[12px] font-normal uppercase">CREATED BY</p>
@@ -340,20 +354,27 @@ export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionPr
                                     {(() => {
                                         const threshold = Number(token.graduationThreshold);
                                         const target = Number(token.graduationTarget);
-                                        const circulating = Number(token.circulatingSupply);
+                                        const reserve = Number(token.reserve);
+                                        // Optionally show formatted reserve value for debugging or display
                                         let progress = 0;
                                         let progressText = "0%";
                                         if (target > threshold) {
-                                            progress = (circulating - threshold) / (target - threshold);
-                                            progress = Math.max(0, Math.min(1, progress));
+                                            if (reserve <= threshold) {
+                                                progress = 0;
+                                            } else if (reserve >= target) {
+                                                progress = 1;
+                                            } else {
+                                                progress = (reserve - threshold) / (target - threshold);
+                                            }
                                             progressText = (progress * 100).toFixed(2) + "%";
                                         }
-                                        const belowThreshold = circulating < threshold;
+                                        const belowThreshold = reserve < threshold;
                                         return (
                                             <div className="flex flex-col gap-[6px]">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-[#707472] text-[12px] font-normal">Bonding Curve Progress</p>
                                                     <p className={`text-[#2D6BFF] text-[12px] font-normal`}>{progressText}</p>
+                                                    {/* <p className="text-xs text-[#707472]">Reserve: {formatNumberCompact(token.reserve)}</p> */}
                                                 </div>
                                                 <div className="relative h-[12px] md:h-[16px] w-full">
                                                     <div className="flex gap-[3px] md:gap-1 items-center absolute top-0 left-0 right-0">
