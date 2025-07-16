@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -9,8 +10,25 @@ import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
 import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { toast } from "@/hooks/use-toast";
 
+
 const CONTRACT_ADDRESS = "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
 const MODULE_NAME = "fa_factory";
+
+// Helper to show real-world value (divide by 10^decimals)
+const getRealValue = (value: string | number, decimals: number, isTime?: boolean): string => {
+    if (!value || isNaN(Number(value))) return '';
+    if (isTime) {
+        // For seconds, show in hours/days if large
+        const sec = Number(value);
+        if (sec < 60) return `${sec} giây`;
+        if (sec < 3600) return `${(sec / 60).toFixed(2)} phút`;
+        if (sec < 86400) return `${(sec / 3600).toFixed(2)} giờ`;
+        return `${(sec / 86400).toFixed(2)} ngày`;
+    }
+    const num = Number(value) / Math.pow(10, Number(decimals));
+    if (isNaN(num)) return '';
+    return num.toLocaleString(undefined, { maximumFractionDigits: Number(decimals) });
+};
 
 interface TokenFormData {
     symbol: string;
@@ -35,6 +53,7 @@ interface TokenFormData {
     telegram?: string;
     discord?: string;
 }
+
 
 
 export default function SimpleCreateTokenPage() {
@@ -293,15 +312,30 @@ export default function SimpleCreateTokenPage() {
                                     <Input name="decimals" value={formData.decimals} onChange={handleInputChange} type="number" min={0} max={18} placeholder="e.g. 8" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Total Supply</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Total Supply
+                                        {formData.totalSupply && formData.decimals !== undefined && !isNaN(Number(formData.totalSupply)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.totalSupply, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="totalSupply" value={formData.totalSupply} onChange={handleInputChange} type="number" placeholder="e.g. 1000000000000000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Mint Amount (K)</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Mint Amount (K)
+                                        {formData.mintAmount && formData.decimals !== undefined && !isNaN(Number(formData.mintAmount)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.mintAmount, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="mintAmount" value={formData.mintAmount} onChange={handleInputChange} type="number" placeholder="e.g. 100" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Buy Fee</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Buy Fee
+                                        {formData.buyFee && formData.decimals !== undefined && !isNaN(Number(formData.buyFee)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.buyFee, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="buyFee" value={formData.buyFee} onChange={handleInputChange} type="number" placeholder="e.g. 300" />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
@@ -336,23 +370,48 @@ export default function SimpleCreateTokenPage() {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Backing Ratio</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Backing Ratio
+                                        {formData.backingRatio && formData.decimals !== undefined && !isNaN(Number(formData.backingRatio)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.backingRatio, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="backingRatio" value={formData.backingRatio} onChange={handleInputChange} type="number" placeholder="e.g. 5000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Withdrawal Limit</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Withdrawal Limit
+                                        {formData.withdrawalLimit && formData.decimals !== undefined && !isNaN(Number(formData.withdrawalLimit)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.withdrawalLimit, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="withdrawalLimit" value={formData.withdrawalLimit} onChange={handleInputChange} type="number" placeholder="e.g. 1000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Withdrawal Cooldown</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Withdrawal Cooldown
+                                        {formData.withdrawalCooldown && !isNaN(Number(formData.withdrawalCooldown)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.withdrawalCooldown, formData.decimals, true)})</span>
+                                        }
+                                    </label>
                                     <Input name="withdrawalCooldown" value={formData.withdrawalCooldown} onChange={handleInputChange} type="number" placeholder="e.g. 86400 (seconds)" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Graduation Threshold</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Graduation Threshold
+                                        {formData.graduationThreshold && formData.decimals !== undefined && !isNaN(Number(formData.graduationThreshold)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.graduationThreshold, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="graduationThreshold" value={formData.graduationThreshold} onChange={handleInputChange} type="number" placeholder="e.g. 100000000" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Graduation Target</label>
+                                    <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">
+                                        Graduation Target
+                                        {formData.graduationTarget && formData.decimals !== undefined && !isNaN(Number(formData.graduationTarget)) &&
+                                            <span className="ml-2 text-white/50">(Ví dụ: {getRealValue(formData.graduationTarget, formData.decimals)} {formData.symbol || ''})</span>
+                                        }
+                                    </label>
                                     <Input name="graduationTarget" value={formData.graduationTarget} onChange={handleInputChange} type="number" placeholder="e.g. 1000000000" />
                                 </div>
                             </div>

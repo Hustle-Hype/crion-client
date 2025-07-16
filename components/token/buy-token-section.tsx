@@ -313,7 +313,8 @@ export default function BuyTokenSection({ tokens, setTokens }: BuyTokenSectionPr
                                         height="136"
                                         alt={token.name}
                                         className="rounded-xl min-h-[136px] max-h-[136px] object-cover w-full rounded-b-none"
-                                        src={"https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-pc-800x447.jpg"}
+                                        src={token.iconUrl || "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-pc-800x447.jpg"}
+                                        onError={(e) => { e.currentTarget.src = "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-pc-800x447.jpg"; }}
                                     />
                                     <div className="absolute top-2 left-2 z-10">
                                         {(!token.saleStatus || token.saleStatus === "Bonding") ? (

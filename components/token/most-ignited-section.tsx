@@ -239,7 +239,8 @@ export default function MostIgnitedSection({ tokens = [] }: { tokens: TokenInfo[
                                             height="136"
                                             alt={token.name}
                                             className="rounded-xl min-h-[136px] max-h-[136px] object-cover w-full rounded-b-none"
-                                            src={"https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-ngau.jpg"}
+                                            src={token.iconUrl || "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-ngau.jpg"}
+                                            onError={(e) => { e.currentTarget.src = "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-ngau.jpg"; }}
                                         />
                                         <div className="absolute top-2 left-2 z-10">
                                             {(!token.saleStatus || token.saleStatus === "Bonding") ? (
