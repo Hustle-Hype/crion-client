@@ -407,7 +407,7 @@ export default function SimpleCreateTokenPage() {
           </div>
         </div>
         {/* Main content */}
-        <div className="w-full lg:w-3/4 p-4 sm:p-6 lg:p-8 rounded-xl bg-card relative">
+        <div className="w-full lg:w-3/4 p-4 sm:p-6 lg:p-8 rounded-xl bg-[#181a1f] relative">
           {step === 0 && (
             <form
               className="space-y-6 sm:space-y-8"
