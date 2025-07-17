@@ -204,9 +204,8 @@ export function WalletSelector() {
             </div>
           </div>
           <svg
-            className={`w-3 h-3 lg:w-4 lg:h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
-              isDropdownOpen ? "rotate-180" : ""
-            }`}
+            className={`w-3 h-3 lg:w-4 lg:h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isDropdownOpen ? "rotate-180" : ""
+              }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -361,7 +360,8 @@ export function WalletSelector() {
       {/* Modal nhỏ gọn, chỉ ví Aptos */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#0B0E14]"
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-colors duration-200"
+          style={{ background: 'rgba(11, 14, 20, 0.92)' }}
           onClick={() => setIsModalOpen(false)}
         >
           <div
@@ -430,11 +430,10 @@ export function WalletSelector() {
                       ? connectToPetra
                       : undefined
                   }
-                  className={`w-full flex items-center justify-between px-3 py-2 bg-[#181A20] hover:bg-[#23262F] transition rounded-2xl mb-2 ${
-                    !wallet.installed && wallet.name !== "All Wallets"
-                      ? "opacity-60 cursor-not-allowed"
-                      : ""
-                  }`}
+                  className={`w-full flex items-center justify-between px-3 py-2 bg-[#181A20] hover:bg-[#23262F] transition rounded-2xl mb-2 ${!wallet.installed && wallet.name !== "All Wallets"
+                    ? "opacity-60 cursor-not-allowed"
+                    : ""
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#23262F]">
