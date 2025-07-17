@@ -58,21 +58,50 @@ export function WalletSelector() {
     }, [account?.address]);
 
     // Wallet list with better icons and more options
-    const wallets: Wallet[] = [
+    // Wallets giống hình
+    // Aptos wallets only
+    const wallets = [
         {
             name: "Petra",
-            icon: <PetraIcon className="w-8 h-8" />,
+            icon: <img src="/wallet-icons/petra.svg" alt="Petra" className="w-8 h-8" />,
+            status: "INSTALLED",
             installed: typeof window !== "undefined" && !!(window as any).aptos,
         },
         {
             name: "Martian",
-            icon: <MartianIcon className="w-8 h-8" />,
-            installed: false, // Add when supported
+            icon: <img src="/wallet-icons/martian.svg" alt="Martian" className="w-8 h-8" />,
+            status: "INSTALLED",
+            installed: false,
         },
         {
             name: "Pontem",
-            icon: <PontemIcon className="w-8 h-8" />,
-            installed: false, // Add when supported
+            icon: <img src="/wallet-icons/pontem.svg" alt="Pontem" className="w-8 h-8" />,
+            status: "INSTALLED",
+            installed: false,
+        },
+        {
+            name: "Fewcha",
+            icon: <img src="/wallet-icons/fewcha.svg" alt="Fewcha" className="w-8 h-8" />,
+            status: "INSTALLED",
+            installed: false,
+        },
+        {
+            name: "Spika",
+            icon: <img src="/wallet-icons/spika.svg" alt="Spika" className="w-8 h-8" />,
+            status: "INSTALLED",
+            installed: false,
+        },
+        {
+            name: "Rise",
+            icon: <img src="/wallet-icons/rise.svg" alt="Rise" className="w-8 h-8" />,
+            status: "INSTALLED",
+            installed: false,
+        },
+        {
+            name: "All Wallets",
+            icon: <img src="/wallet-icons/allwallets.svg" alt="All Wallets" className="w-8 h-8" />,
+            status: "7",
+            installed: false,
         },
     ];
 
@@ -241,181 +270,70 @@ export function WalletSelector() {
                 variant="crion"
                 onClick={() => setIsModalOpen(true)}
                 disabled={connecting}
-                className="relative flex items-center gap-2 text-sm font-medium uppercase overflow-hidden group disabled:opacity-70"
+                className="flex items-center gap-2 text-sm font-medium uppercase"
             >
-                <div className="relative z-10 flex items-center gap-2">
-                    {connecting ? (
-                        <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Connecting...</span>
-                        </>
-                    ) : (
-                        <>
-                            <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            <HyperText animateOnHover={false}>Connect Wallet</HyperText>
-                        </>
-                    )}
-                </div>
-                {!connecting && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#ABF2FF]/20 via-transparent to-[#ABF2FF]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                )}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Connect Wallet</span>
             </Button>
 
-            {/* Modal */}
+            {/* Modal nhỏ gọn, chỉ ví Aptos */}
             {isModalOpen && (
                 <div
-                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
+                    className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60"
                     onClick={() => setIsModalOpen(false)}
                 >
                     <div
-                        className="relative bg-[#0B0E14] border border-[#1F2937] rounded-3xl p-8 w-full max-w-lg mx-4 shadow-2xl animate-in slide-in-from-bottom-4 zoom-in-95 duration-300"
+                        className="relative bg-[#181A20] rounded-[32px] w-[360px] mx-4 shadow-2xl p-0 border border-[#23262F] z-[100000]"
                         onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: 'linear-gradient(135deg, rgba(11, 14, 20, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%)',
-                            backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(171, 242, 255, 0.2)',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(171, 242, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                        }}
                     >
-                        {/* Decorative Elements */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#ABF2FF]/10 to-transparent rounded-full blur-2xl"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-xl"></div>
-
                         {/* Header */}
-                        <div className="relative flex items-center justify-between mb-8">
-                            <div>
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-1">
-                                    Connect Wallet
-                                </h2>
-                                <p className="text-gray-400 text-sm">
-                                    Choose your preferred wallet to continue
-                                </p>
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-[#23262F]">
+                            <div className="flex items-center gap-2">
+                                <span className="w-7 h-7 flex items-center justify-center rounded-full bg-[#23262F] text-white">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" stroke="#ABF2FF" strokeWidth="2" fill="none" />
+                                        <path stroke="#ABF2FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4M12 8h.01" />
+                                    </svg>
+                                </span>
                             </div>
+                            <h2 className="text-lg font-bold text-white text-center flex-1 -ml-7">Connect Wallet</h2>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="relative p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 group"
+                                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"
                             >
-                                <svg className="w-5 h-5 transition-transform group-hover:rotate-90 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
-                        {/* Wallet Options */}
-                        <div className="relative space-y-3">
-                            {wallets.map((wallet, index) => (
+                        {/* Wallet List */}
+                        <div className="py-2 px-2">
+                            {wallets.map((wallet, idx) => (
                                 <button
                                     key={wallet.name}
-                                    onClick={wallet.name === "Petra" ? connectToPetra : undefined}
-                                    disabled={connecting || !wallet.installed}
-                                    className={`
-                    w-full group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 transform hover:scale-[1.02]
-                    ${wallet.installed
-                                            ? 'bg-gradient-to-r from-white/5 to-white/10 hover:from-[#ABF2FF]/10 hover:to-[#ABF2FF]/20 border border-white/10 hover:border-[#ABF2FF]/30 hover:shadow-lg hover:shadow-[#ABF2FF]/10'
-                                            : 'bg-gray-800/30 border border-gray-700/30 cursor-not-allowed opacity-60'
-                                        }
-                    ${connecting && wallet.name === "Petra" ? 'animate-pulse' : ''}
-                  `}
-                                    style={{
-                                        animationDelay: `${index * 100}ms`
-                                    }}
+                                    disabled={!wallet.installed && wallet.name !== "All Wallets"}
+                                    onClick={wallet.name === "Petra" && wallet.installed ? connectToPetra : undefined}
+                                    className={`w-full flex items-center justify-between px-3 py-2 bg-[#181A20] hover:bg-[#23262F] transition rounded-2xl mb-2 ${!wallet.installed && wallet.name !== "All Wallets" ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 >
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        {/* Wallet Icon */}
-                                        <div className="relative">
-                                            <div className={`
-                        w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300
-                        ${wallet.installed
-                                                    ? 'bg-gradient-to-br from-[#ABF2FF]/20 to-[#ABF2FF]/10 border-[#ABF2FF]/20 group-hover:border-[#ABF2FF]/40 group-hover:shadow-lg group-hover:shadow-[#ABF2FF]/20'
-                                                    : 'bg-gray-700/50 border-gray-600/50'
-                                                }
-                      `}>
-                                                <div className="transition-transform duration-300 group-hover:scale-110">
-                                                    {wallet.icon}
-                                                </div>
-                                            </div>
-                                            {wallet.installed && (
-                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-green-400 to-green-500 rounded-full border-2 border-[#0B0E14] flex items-center justify-center">
-                                                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                    </svg>
-                                                </div>
-                                            )}
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#23262F]">
+                                            {wallet.icon}
                                         </div>
-
-                                        {/* Wallet Info */}
-                                        <div className="flex-1 text-left">
-                                            <div className="font-semibold text-white text-lg group-hover:text-[#ABF2FF] transition-colors duration-300">
-                                                {wallet.name}
-                                            </div>
-                                            <div className={`text-sm transition-colors duration-300 ${wallet.installed
-                                                ? 'text-gray-400 group-hover:text-gray-300'
-                                                : 'text-gray-500'
-                                                }`}>
-                                                {wallet.installed ? "Ready to connect" : "Not installed"}
-                                            </div>
-                                        </div>
-
-                                        {/* Status Indicator */}
-                                        <div className="flex items-center">
-                                            {connecting && wallet.name === "Petra" ? (
-                                                <div className="w-6 h-6 border-2 border-[#ABF2FF] border-t-transparent rounded-full animate-spin"></div>
-                                            ) : wallet.installed ? (
-                                                <svg className="w-5 h-5 text-gray-400 group-hover:text-[#ABF2FF] transition-colors duration-300 transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            ) : (
-                                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.966-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Hover Effect */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-[#ABF2FF]/0 via-[#ABF2FF]/5 to-[#ABF2FF]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                                    {/* Ripple effect for installed wallets */}
-                                    {wallet.installed && (
-                                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100">
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#ABF2FF]/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
-                                        </div>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Warning Message */}
-                        {wallets.every(wallet => !wallet.installed) && (
-                            <div className="mt-6 p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-2xl animate-in slide-in-from-bottom duration-500">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                                        <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.966-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                        </svg>
+                                        <span className="text-white font-medium text-[15px]">{wallet.name}</span>
                                     </div>
                                     <div>
-                                        <p className="text-yellow-300 font-medium text-sm">
-                                            No wallets detected
-                                        </p>
-                                        <p className="text-yellow-400/80 text-xs mt-1">
-                                            Please install a supported wallet to continue
-                                        </p>
+                                        {wallet.status === "INSTALLED" && (
+                                            <span className="px-2 py-0.5 rounded-full bg-[#219653] text-xs text-white font-semibold">INSTALLED</span>
+                                        )}
+                                        {wallet.name === "All Wallets" && (
+                                            <span className="px-2 py-0.5 rounded-full bg-[#23262F] text-xs text-gray-300 font-semibold">{wallet.status}</span>
+                                        )}
                                     </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Footer */}
-                        <div className="relative mt-8 pt-6 border-t border-white/10">
-                            <p className="text-center text-xs text-gray-500">
-                                By connecting, you agree to our{' '}
-                                <span className="text-[#ABF2FF] hover:underline cursor-pointer transition-colors">Terms of Service</span>
-                                {' '}and{' '}
-                                <span className="text-[#ABF2FF] hover:underline cursor-pointer transition-colors">Privacy Policy</span>
-                            </p>
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
