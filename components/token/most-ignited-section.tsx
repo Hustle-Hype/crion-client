@@ -85,7 +85,7 @@ function BondingCurveProgress({
               <div
                 key={i}
                 className={`h-[8px] md:h-[12px] w-[6px] md:w-[8px] rounded-full ${
-                  filled ? "bg-[#FF9900]" : "bg-[#232323]"
+                  filled ? "bg-[#FF9900]" : "bg-[#181a1f]"
                 }`}
               />
             );
@@ -159,7 +159,7 @@ export default function MostIgnitedSection({
         <div className="transform-gpu absolute top-1/2 -translate-y-1/2 h-[60px] md:h-[90px] w-full -right-[35%] md:blur-[50px] blur-[25px] [border-radius:50%_100%] bg-[#79FBFD] mix-blend-plus-lighter"></div>{" "}
         <div className="transform-gpu absolute top-1/2 -translate-y-1/2 h-[60px] md:h-[90px] w-full -left-[35%] md:blur-[50px] blur-[25px] [border-radius:50%_100%] bg-[#ABF2FF] mix-blend-plus-lighter"></div>{" "}
       </div>
-      <div className="relative z-50 w-full flex flex-col md:flex-row gap-8 md:gap-0 px-4 md:px-20 bg-[#171a2040] md:rounded-[24px] lg:rounded-[48px] pt-40 pb-20 gradient-border">
+      <div className="relative w-full flex flex-col md:flex-row gap-8 md:gap-0 px-4 md:px-20 bg-[#171a2040] md:rounded-[24px] lg:rounded-[48px] pt-40 pb-20 gradient-border">
         <div className="inset-0"></div>
         {/* Left: Title, subtitle, nav */}
         <div className="relative flex md:min-w-[313px] md:min-h-[367px] z-10 justify-between flex-col pr-10">
@@ -272,19 +272,19 @@ export default function MostIgnitedSection({
                     </div>
                     <div className="bg-[#121419] py-[14px] px-5 rounded-xl rounded-t-none flex-1 flex flex-col justify-between">
                       <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
-                        <div className="h-5 bg-[#232323] rounded w-2/3 mb-2" />
+                        <div className="h-5 bg-[#181a1f] rounded w-2/3 mb-2" />
                         <div className="flex justify-between items-center">
-                          <div className="h-3 bg-[#232323] rounded w-1/4" />
-                          <div className="h-3 bg-[#232323] rounded w-1/4" />
+                          <div className="h-3 bg-[#181a1f] rounded w-1/4" />
+                          <div className="h-3 bg-[#181a1f] rounded w-1/4" />
                         </div>
                       </div>
                       <div className="pt-5 flex flex-col gap-5 flex-1">
                         <div className="flex justify-between items-center">
-                          <div className="h-4 bg-[#232323] rounded w-1/4" />
-                          <div className="h-4 bg-[#232323] rounded w-1/4" />
-                          <div className="h-4 bg-[#232323] rounded w-1/4" />
+                          <div className="h-4 bg-[#181a1f] rounded w-1/4" />
+                          <div className="h-4 bg-[#181a1f] rounded w-1/4" />
+                          <div className="h-4 bg-[#181a1f] rounded w-1/4" />
                         </div>
-                        <div className="h-3 bg-[#232323] rounded w-full" />
+                        <div className="h-3 bg-[#181a1f] rounded w-full" />
                       </div>
                     </div>
                   </div>
@@ -415,7 +415,7 @@ export default function MostIgnitedSection({
                                     <div
                                       key={i}
                                       className={`h-[8px] md:h-[12px] w-[6px] md:w-[8px] rounded-full ${
-                                        filled ? "bg-[#2D6BFF]" : "bg-[#232323]"
+                                        filled ? "bg-[#2D6BFF]" : "bg-[#181a1f]"
                                       }`}
                                     />
                                   );

@@ -329,27 +329,27 @@ export default function BuyTokenSection({
           {Array.from({ length: 4 }).map((_, idx) => (
             <div
               key={idx}
-              className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse bg-[#18191c] borderToken"
+              className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse  bg-[#0B0E14] borderToken"
               style={{ width: 298, minHeight: 367 }}
             >
               <div className="relative rounded-xl">
-                <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#232323]" />
+                <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#181a1f]" />
               </div>
               <div className="bg-[#181a1f] py-[14px] px-5 rounded-xl rounded-t-none flex-1 flex flex-col justify-between">
                 <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
-                  <div className="h-5 bg-[#232323] rounded w-2/3 mb-2" />
+                  <div className="h-5 bg-[#181a1f] rounded w-2/3 mb-2" />
                   <div className="flex justify-between items-center">
-                    <div className="h-3 bg-[#232323] rounded w-1/4" />
-                    <div className="h-3 bg-[#232323] rounded w-1/4" />
+                    <div className="h-3 bg-[#181a1f] rounded w-1/4" />
+                    <div className="h-3 bg-[#181a1f] rounded w-1/4" />
                   </div>
                 </div>
                 <div className="pt-5 flex flex-col gap-5 flex-1">
                   <div className="flex justify-between items-center">
-                    <div className="h-4 bg-[#232323] rounded w-1/4" />
-                    <div className="h-4 bg-[#232323] rounded w-1/4" />
-                    <div className="h-4 bg-[#232323] rounded w-1/4" />
+                    <div className="h-4 bg-[#181a1f] rounded w-1/4" />
+                    <div className="h-4 bg-[#181a1f] rounded w-1/4" />
+                    <div className="h-4 bg-[#181a1f] rounded w-1/4" />
                   </div>
-                  <div className="h-3 bg-[#232323] rounded w-full" />
+                  <div className="h-3 bg-[#181a1f] rounded w-full" />
                 </div>
               </div>
             </div>
