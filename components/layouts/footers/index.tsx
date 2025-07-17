@@ -39,7 +39,7 @@ export default function FooterSection() {
           <Logo />
         </Link>
 
-        <div className="my-8 flex flex-wrap justify-center gap-6 text-sm">
+        {/* <div className="my-8 flex flex-wrap justify-center gap-6 text-sm">
           {links.map((link, index) => (
             <Link
               key={index}
@@ -64,7 +64,7 @@ export default function FooterSection() {
             </Link>
           ))}
           <ThemeToggle />
-        </div>
+        </div> */}
         <span className="text-muted-foreground block text-center text-sm">
           {" "}
           © {new Date().getFullYear()} Crion, All rights reserved
