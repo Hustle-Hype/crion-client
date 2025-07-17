@@ -1,4 +1,3 @@
-
 import React from "react";
 import Hero from "./hero";
 import Spline from "@splinetool/react-spline/next";
@@ -6,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { toast } from "@/hooks/use-toast";
-
 
 export default function HeroSection() {
   const connectedWallet = useConnectedWallet();
@@ -21,7 +19,7 @@ export default function HeroSection() {
     }
   };
   return (
-    <div className="relative w-full h-screen flex flex-col items-center justify-center bg-[#000000] overflow-hidden px-4 sm:px-6 lg:px-8">
+    <div className="relative w-full h-screen flex flex-col items-center justify-center bg-[#0B0E14] overflow-hidden px-4 sm:px-6 lg:px-8">
       <div className="absolute h-[414px] w-full top-[-100px]">
         <div className="transform-gpu absolute h-[90px] w-full left-1/2 -translate-x-1/2 blur-[50px] [border-radius:50%_100%] bg-[#ABF2FF] mix-blend-plus-lighter" />
       </div>
@@ -37,7 +35,9 @@ export default function HeroSection() {
           Smart scores. Clean UI.
         </p>
         <Button variant="crion" className="w-fit" asChild>
-          <Link href="/token/create" onClick={handleClick}>Tokenize Your Assets</Link>
+          <Link href="/token/create" onClick={handleClick}>
+            Tokenize Your Assets
+          </Link>
         </Button>
       </div>
       {/* <Spline
