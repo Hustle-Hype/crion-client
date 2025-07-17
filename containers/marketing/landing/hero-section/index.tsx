@@ -28,7 +28,7 @@ export default function HeroSection() {
 
       <Hero />
 
-      <div className="relative flex flex-col items-center justify-center gap-4 mt-10 z-50">
+      <div className="relative flex flex-col items-center justify-center gap-4 mt-10 z-0">
         <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold pointer-events-none">
           <span className="text-primary">Crion: Launch like</span>
           <br />
