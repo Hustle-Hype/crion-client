@@ -321,7 +321,16 @@ export default function SimpleCreateTokenPage() {
                                     <label className="text-xs flex items-center gap-2 text-white font-normal mb-2">Token Icon</label>
                                     <div className="flex flex-col gap-2">
                                         <Input name="iconUrl" value={formData.iconUrl} onChange={handleInputChange} placeholder="e.g. https://domain.com/token.png" />
-                                        <input type="file" accept="image/*" onChange={handleImageUpload} className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                        <label className="block">
+                                            <span className="sr-only">Choose file</span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#23272b] file:text-white hover:file:bg-[#18191a] file:transition-colors file:duration-150"
+                                                aria-label="No file chosen"
+                                            />
+                                        </label>
                                         {formData.iconUrl && (
                                             <img src={formData.iconUrl} alt="Token Icon Preview" className="w-20 h-20 object-cover rounded mt-2 border border-white/10" />
                                         )}
