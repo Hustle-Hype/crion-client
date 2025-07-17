@@ -153,13 +153,13 @@ export default function MostIgnitedSection({
 
   return (
     <section className="pt-40 flex flex-col gap-y-16 md:gap-y-24 items-center justify-center relative">
-      <div className="will-change-opacity absolute h-[414px] overflow-hidden w-[100dvw] left-1/2 -translate-x-1/2 -top-16 mask-[radial-gradient(90%_80%_at_50%_100%,#D9D9D9_80%,rgba(115,115,115,0)_100%)] md:mask-[radial-gradient(50%_65.7%_at_50%_34.3%,#D9D9D9_0%,rgba(115,115,115,0)_100%)]">
+      <div className="will-change-opacity absolute h-[414px] overflow-hidden w-[100dvw] left-1/2 -translate-x-1/2 -top-18 mask-[radial-gradient(90%_80%_at_50%_100%,#D9D9D9_80%,rgba(115,115,115,0)_100%)] md:mask-[radial-gradient(50%_65.7%_at_50%_34.3%,#D9D9D9_0%,rgba(115,115,115,0)_100%)]">
         {" "}
         <div className="transform-gpu top-1/2 -translate-y-1/2 absolute h-[60px] md:h-[90px] w-full left-1/2 -translate-x-1/2 md:blur-[50px] blur-[25px] [border-radius:50%_100%] bg-[#2487B4] mix-blend-plus-lighter"></div>{" "}
         <div className="transform-gpu absolute top-1/2 -translate-y-1/2 h-[60px] md:h-[90px] w-full -right-[35%] md:blur-[50px] blur-[25px] [border-radius:50%_100%] bg-[#79FBFD] mix-blend-plus-lighter"></div>{" "}
         <div className="transform-gpu absolute top-1/2 -translate-y-1/2 h-[60px] md:h-[90px] w-full -left-[35%] md:blur-[50px] blur-[25px] [border-radius:50%_100%] bg-[#ABF2FF] mix-blend-plus-lighter"></div>{" "}
       </div>
-      <div className="relative z-50 w-full flex flex-col md:flex-row gap-8 md:gap-0 px-4 md:px-20 bg-[#0d11165e] md:rounded-[24px] lg:rounded-[48px] pt-40 pb-20 gradient-border">
+      <div className="relative z-50 w-full flex flex-col md:flex-row gap-8 md:gap-0 px-4 md:px-20 bg-[#171a2040] md:rounded-[24px] lg:rounded-[48px] pt-40 pb-20 gradient-border">
         <div className="inset-0"></div>
         {/* Left: Title, subtitle, nav */}
         <div className="relative flex md:min-w-[313px] md:min-h-[367px] z-10 justify-between flex-col pr-10">
