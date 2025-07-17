@@ -82,17 +82,8 @@ function Skeleton({ className = "" }: { className?: string }) {
 }
 
 export default function TokenDetailPage() {
-    // Copy to clipboard helper
-    // Copy to clipboard helper with local copied state
+    // All hooks must be at the top level and in the same order every render
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
-    function handleCopy(text: string, key: string) {
-        if (!text) return;
-        navigator.clipboard.writeText(text);
-        setCopiedKey(key);
-        setTimeout(() => {
-            setCopiedKey(current => (current === key ? null : current));
-        }, 1200);
-    }
     const params = useParams();
     const symbol = typeof params?.symbol === 'string' ? params.symbol : Array.isArray(params?.symbol) ? params.symbol[0] : '';
     const [token, setToken] = useState<TokenInfo | null>(null);
@@ -102,13 +93,22 @@ export default function TokenDetailPage() {
     const [buying, setBuying] = useState(false);
     const [selling, setSelling] = useState(false);
     const [issuerScore, setIssuerScore] = useState<number | null>(null);
-    // Add state for buy/sell tab
     const [buyingTab, setBuyingTab] = useState<'buy' | 'sell'>("buy");
+    const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'chat'>('overview');
     const connectedWallet = useConnectedWallet();
     const { safeSignAndSubmitTransaction } = useSafeWallet();
-    // State for user token balance and Aptos balance
     const [userTokenBalance, setUserTokenBalance] = useState<string>("0");
     const [aptosInWalletUser, setAptosInWalletUser] = useState<string>("0");
+
+    // Copy to clipboard helper
+    function handleCopy(text: string, key: string) {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedKey(key);
+        setTimeout(() => {
+            setCopiedKey(current => (current === key ? null : current));
+        }, 1200);
+    }
     // Fetch user token balance and Aptos balance
     // Helper: parse balance string to number
     function parseBalance(balance: string) {
@@ -358,39 +358,55 @@ export default function TokenDetailPage() {
         }
     };
 
-    if (loading) return (
-        <div className="max-w-7xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left/Main section skeleton */}
-            <div className="lg:col-span-2 flex flex-col gap-6">
-                <div className="flex items-stretch p-3 gap-6">
-                    <div className="flex flex-col gap-2.5">
-                        <Skeleton className="w-[140px] h-[140px]" />
-                    </div>
-                    <div className="flex-1 flex flex-col gap-3">
-                        <div className="flex flex-col gap-4 justify-between h-full">
-                            <div className="flex flex-col gap-2">
-                                <Skeleton className="h-8 w-1/2 mb-2" />
-                                <Skeleton className="h-4 w-1/3 mb-2" />
-                                <Skeleton className="h-4 w-2/3" />
+
+    // Move all hooks above any early returns to follow Rules of Hooks
+    // ...existing code...
+
+    // Early returns after all hooks
+    if (loading) {
+        return (
+            <div className="max-w-7xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left/Main section skeleton */}
+                <div className="lg:col-span-2 flex flex-col gap-6">
+                    <div className="flex items-stretch p-3 gap-6">
+                        <div className="flex flex-col gap-2.5">
+                            <Skeleton className="w-[140px] h-[140px]" />
+                        </div>
+                        <div className="flex-1 flex flex-col gap-3">
+                            <div className="flex flex-col gap-4 justify-between h-full">
+                                <div className="flex flex-col gap-2">
+                                    <Skeleton className="h-8 w-1/2 mb-2" />
+                                    <Skeleton className="h-4 w-1/3 mb-2" />
+                                    <Skeleton className="h-4 w-2/3" />
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <div className="flex flex-col gap-4 md:gap-2">
+                        <Skeleton className="h-6 w-1/3 mb-2" />
+                        <Skeleton className="h-4 w-1/2 mb-2" />
+                    </div>
                 </div>
-                <div className="flex flex-col gap-4 md:gap-2">
-                    <Skeleton className="h-6 w-1/3 mb-2" />
-                    <Skeleton className="h-4 w-1/2 mb-2" />
+                {/* Right/Sidebar skeleton */}
+                <div className="lg:col-span-1 space-y-4 md:space-y-6">
+                    <Skeleton className="h-24 w-full mb-4" />
+                    <Skeleton className="h-40 w-full mb-4" />
+                    <Skeleton className="h-24 w-full mb-4" />
+                    <Skeleton className="h-24 w-full" />
                 </div>
             </div>
-            {/* Right/Sidebar skeleton */}
-            <div className="lg:col-span-1 space-y-4 md:space-y-6">
-                <Skeleton className="h-24 w-full mb-4" />
-                <Skeleton className="h-40 w-full mb-4" />
-                <Skeleton className="h-24 w-full mb-4" />
-                <Skeleton className="h-24 w-full" />
-            </div>
-        </div>
-    );
-    if (!token) return <div className="p-10 text-center">Không tìm thấy token.</div>;
+        );
+    }
+    if (!token) {
+        return <div className="p-10 text-center">Không tìm thấy token.</div>;
+    }
+
+
+
+    // Helper to format category (replace _ with space)
+    function formatCategory(cat: string) {
+        return cat ? cat.replace(/_/g, ' ') : '';
+    }
 
     return (
         <div className="max-w-7xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -428,14 +444,12 @@ export default function TokenDetailPage() {
                                                 className="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu outline-none text-tiny gap-2 rounded-full px-0 !gap-0 transition-transform-colors-opacity motion-reduce:transition-none text-default-foreground min-w-8 bg-[#313131] h-[32px] w-[32px] transition-colors border border-white/20 hover:bg-[#232323] active:scale-95"
                                                 title="Sao chép địa chỉ token creator"
                                             >
-                                                {/* New copy icon: checkmark if copied, else a different icon (e.g. clipboard-check) */}
                                                 {copiedKey === 'token-address' ? (
                                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-green-400"><path d="M5 10.5l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                                 ) : (
                                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-white/64"><rect x="4" y="4" width="12" height="12" rx="3" stroke="currentColor" strokeWidth="1.5" /><path d="M8 8h4v4H8z" fill="currentColor" fillOpacity=".3" /></svg>
                                                 )}
                                             </button>
-                                            {/* Tooltip */}
                                             {copiedKey === 'token-address' && (
                                                 <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#232323] text-white text-xs px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-10">Copied!</span>
                                             )}
@@ -477,20 +491,58 @@ export default function TokenDetailPage() {
                         </div>
                     </div>
                 </div>
-                {/* Overview Section Only (history tab removed) */}
+                {/* Tabs: Overview, Trade History, Chat */}
                 <div className="flex flex-col gap-4 md:gap-2">
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Asset Name:</p><p className="text-[12px] text-white font-medium">{token.name}</p></div>
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Category:</p><div className="bgTag rounded-full py-2 px-[10px] max-h-[24px] flex justify-center items-center uppercase"><p className="text-[12px] font-medium text-[#2D6BFF]">Commodities</p></div></div>
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Network:</p><div className="flex items-center gap-2"><img alt="Aptos" className="w-4 h-4 rounded-full" src="/aptos-logo.png" /><span className="text-white font-medium text-xs md:text-sm leading-[1.43em] tracking-[-1%]">Aptos Testnet</span></div></div>
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Time:</p><p className="text-[12px] text-white font-medium">2d ago</p></div>
+                    <div role="tablist" aria-orientation="horizontal" className="items-center text-muted-foreground overflow-y-auto bg-transparent h-auto p-0 overflow-x-auto w-full flex" tabIndex={0} data-orientation="horizontal" style={{ outline: 'none' }}>
+                        <button type="button" role="tab" aria-selected={activeTab === 'overview'} aria-controls="overview-tab" data-state={activeTab === 'overview' ? 'active' : 'inactive'} className={`relative inline-flex items-center justify-center whitespace-nowrap font-medium text-white/40 ring-offset-background transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white data-[state=active]:font-medium hover:text-white/90 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent after:transition-all after:duration-200 ${activeTab === 'overview' ? 'text-white font-medium after:bg-[#2D6BFF]' : ''} hover:after:bg-[#2D6BFF]/30 px-4 py-3 text-sm md:text-base`}
+                            onClick={() => setActiveTab('overview')}>Overview</button>
+                        <button type="button" role="tab" aria-selected={activeTab === 'history'} aria-controls="history-tab" data-state={activeTab === 'history' ? 'active' : 'inactive'} className={`relative inline-flex items-center justify-center whitespace-nowrap font-medium text-white/40 ring-offset-background transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white data-[state=active]:font-medium hover:text-white/90 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent after:transition-all after:duration-200 ${activeTab === 'history' ? 'text-white font-medium after:bg-[#2D6BFF]' : ''} hover:after:bg-[#2D6BFF]/30 px-4 py-3 text-sm md:text-base`}
+                            onClick={() => setActiveTab('history')}>Trade History</button>
+                        <button type="button" role="tab" aria-selected={activeTab === 'chat'} aria-controls="chat-tab" data-state={activeTab === 'chat' ? 'active' : 'inactive'} className={`relative inline-flex items-center justify-center whitespace-nowrap font-medium text-white/40 ring-offset-background transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white data-[state=active]:font-medium hover:text-white/90 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent after:transition-all after:duration-200 ${activeTab === 'chat' ? 'text-white font-medium after:bg-[#2D6BFF]' : ''} hover:after:bg-[#2D6BFF]/30 px-4 py-3 text-sm md:text-base`}
+                            onClick={() => setActiveTab('chat')}>Chat</button>
                     </div>
-                    <div className="flex items-center flex-wrap gap-4 mb-2">
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Total Supply:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.totalSupply)}</p></div>
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Circulating Supply:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.circulatingSupply)}</p></div>
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Market Cap:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.marketCap)}</p></div>
-                        <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Holders count:</p><p className="text-[12px] text-white font-medium">1</p></div>
-                    </div>
+                    {/* Tab content */}
+                    {activeTab === 'overview' && (
+                        <div id="overview-tab" className="flex flex-col gap-4">
+                            <div className="flex flex-wrap items-center gap-4">
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Asset Name:</p><p className="text-[12px] text-white font-medium">{token.name}</p></div>
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Category:</p><div className="bgTag rounded-full py-2 px-[10px] max-h-[24px] flex justify-center items-center uppercase"><p className="text-[12px] font-medium text-[#2D6BFF]">{formatCategory(token.assetType || "Unknown")}</p></div></div>
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Network:</p><div className="flex items-center gap-2"><img alt="Aptos" className="w-4 h-4 rounded-full" src="/aptos-logo.png" /><span className="text-white font-medium text-xs md:text-sm leading-[1.43em] tracking-[-1%]">Aptos Testnet</span></div></div>
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Time:</p><p className="text-[12px] text-white font-medium">2d ago</p></div>
+                            </div>
+                            <div className="flex items-center flex-wrap gap-4 mb-2">
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Total Supply:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.totalSupply)}</p></div>
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Circulating Supply:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.circulatingSupply)}</p></div>
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Market Cap:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.marketCap)}</p></div>
+                                <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Holders count:</p><p className="text-[12px] text-white font-medium">1</p></div>
+                            </div>
+                            {/* TradingView Chart Widget - MVP version: currently showing BTCUSDT data. Will integrate real system data in future updates. */}
+                            <div className="w-full" style={{ height: '480px' }}>
+                                <div className="h-full bg-[#232323] rounded-xl border border-[#313131] flex flex-col items-center justify-center relative overflow-hidden">
+                                    <div className="w-full text-center py-2">
+                                        <span className="text-white/70 text-sm font-medium">This is the MVP version. The chart below displays Bitcoin (BTCUSDT) data from TradingView. Real system data will be integrated in future updates.</span>
+                                    </div>
+                                    <iframe
+                                        src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_12345&symbol=BINANCE:BTCUSDT&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hidevolume=1&hidelegend=1&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en"
+                                        style={{ width: '100%', height: '420px', border: 'none', borderRadius: '12px' }}
+                                        allowFullScreen
+                                        title="TradingView Chart"
+                                    ></iframe>
+                                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/60 text-xs font-medium bg-[#232323]/80 px-2 py-1 rounded">TradingView Chart (Symbol: BTCUSDT)</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'history' && (
+                        <div id="history-tab" className="w-full min-h-[200px] bg-[#232323] rounded-xl flex items-center justify-center text-white/40 text-lg font-medium border border-[#313131]">
+                            Trade History Placeholder
+                        </div>
+                    )}
+                    {activeTab === 'chat' && (
+                        <div id="chat-tab" className="w-full min-h-[200px] bg-[#232323] rounded-xl flex items-center justify-center text-white/40 text-lg font-medium border border-[#313131]">
+                            Chat Placeholder
+                        </div>
+                    )}
                 </div>
 
             </div>
