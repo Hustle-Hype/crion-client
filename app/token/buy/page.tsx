@@ -282,7 +282,7 @@ export default function BuyTokenPage() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-[#1A1A1A] py-[14px] px-5 rounded-xl rounded-t-none">
+                            <div className="bg-[#0B0E14] py-[14px] px-5 rounded-xl rounded-t-none">
                                 <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
                                     <p className="text-[20px] font-medium text-white line-clamp-1">{token.name}</p>
                                     <div className="flex justify-between items-center">

@@ -5,18 +5,19 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/logo";
 import { HyperText } from "@/components/hyper-text";
-import { Button } from "@/components/ui/button";
+import { useWallet } from "@/hooks/wallet/useWallet";
 import { WalletSelector } from "@/components/wallet-selector";
 
 const menuItems = [
-  { name: "Explore", href: "#link" },
-  { name: "Passport", href: "/passport" },
-
+  { name: "Explore", href: "#" },
+  { name: "Passport", href: "#passport" },
 ];
 
 export const HomeHeader = () => {
   const [menuState, setMenuState] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = React.useState(false);
+  const { connected, account } = useWallet();
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -25,21 +26,21 @@ export const HomeHeader = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
   return (
     <header>
       <nav
         data-state={menuState && "active"}
-        className="fixed z-20 w-full px-0"
+        className="fixed z-20 w-full px-2"
       >
-        {/* Full width blurred bg khi scroll */}
-        {isScrolled && (
-          <div className={
-            `absolute inset-0 w-full h-full bg-[#171a2005] backdrop-blur-md z-0` +
-            (menuState ? '' : ' pointer-events-none')
-          } />
-        )}
-        <div className="relative mx-auto  max-w-6xl px-6 lg:px-4 z-10">
-          <div className="relative flex flex-wrap items-center justify-between gap-4 py-1 lg:gap-6">
+        <div
+          className={cn(
+            "mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-2",
+            isScrolled &&
+              "bg-[#0B0E14]-card-foreground/90 overflow-hidden backdrop-blur-lg max-w-4xl rounded-2xl border lg:px-2 gradient-border before:bg-border"
+          )}
+        >
+          <div className="relative flex flex-wrap items-center justify-between gap-6 py-2 lg:gap-0">
             <div className="flex w-full justify-between lg:w-auto">
               <Link
                 href="/"
@@ -59,14 +60,19 @@ export const HomeHeader = () => {
               </button>
             </div>
 
-            <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent z-30">
-              <div className="hidden lg:block">
-                <ul className="flex gap-6 text-sm font-medium">
+            <div className="bg-[#0B0E14] in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+              <div
+                className={cn(
+                  "m-auto hidden size-fit lg:block",
+                  isScrolled && "lg:hidden"
+                )}
+              >
+                <ul className="flex gap-8 text-sm font-medium w-[180px]">
                   {menuItems.map((item, index) => (
-                    <li key={index} className="whitespace-nowrap">
+                    <li key={index} className="w-[100%]">
                       <Link
                         href={item.href}
-                        className="text-secondary transition duration-400 hover:text-primary font-mono uppercase"
+                        className="text-secondary transition duration-400 hover:text-primary font-mono uppercase "
                       >
                         <HyperText>{item.name}</HyperText>
                       </Link>
@@ -81,7 +87,6 @@ export const HomeHeader = () => {
                       <Link
                         href={item.href}
                         className="text-muted-foreground hover:text-accent-foreground block duration-150"
-                        onClick={() => setMenuState(false)}
                       >
                         <span>{item.name}</span>
                       </Link>
@@ -89,13 +94,29 @@ export const HomeHeader = () => {
                   ))}
                 </ul>
               </div>
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit lg:ml-8">
+              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                {/* <button
+                  onClick={() => setIsWalletModalOpen(true)}
+                  className="w-[190px] lg:inline-flex group/button flex items-center cursor-pointer justify-center font-medium gap-x-2 flex-shrink-0 gradient-border px-4.5 py-3 text-[14px] rounded-xl text-sm leading-none transition before:[background:linear-gradient(180deg,_rgba(255,255,255,0.25)_0%,_rgba(255,255,255,0.15)_100%)] text-background [background:radial-gradient(161.28%_68.75%_at_50%_68.75%,_rgba(255,255,255,0)_0%,_rgba(255,255,255,0.5)_100%),_#00FFFF] shadow-[0px_0px_12px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF] hover:shadow-[0px_0px_20px_rgba(145,255,255,0.24),inset_0px_-1px_0px_rgba(161,255,255,0.8),inset_0px_1px_4px_#6FFFFF]"
+                >
+                  {connected && account
+                    ? `${account.address.slice(0, 4)}...${account.address.slice(
+                        -4
+                      )}`
+                    : "Connect Wallet"}
+                </button> */}
                 <WalletSelector />
               </div>
             </div>
           </div>
         </div>
       </nav>
+
+      {/* Wallet Modal */}
+      {/* <WalletSelectorModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+      /> */}
     </header>
   );
 };
