@@ -139,7 +139,7 @@ export default function BuyTokenSection({
               if (txnDetails && "sender" in txnDetails) {
                 creatorAddress = txnDetails.sender;
               }
-            } catch {}
+            } catch { }
           }
           if (!creatorAddress || creatorAddress.includes("0000")) continue;
           const decodedSymbol = decodeHexString(eventData.symbol);
@@ -195,7 +195,7 @@ export default function BuyTokenSection({
             marketCap: toStringSafe(fullInfo[23]),
             saleStatus: decodeHexStringSafe(fullInfo[24]),
           });
-        } catch {}
+        } catch { }
       }
       console.log("Fetched tokens:", fetchedTokens);
       setTokens(fetchedTokens);
@@ -246,7 +246,7 @@ export default function BuyTokenSection({
       if (
         connectedWallet.wallet &&
         typeof (connectedWallet.wallet as any).signAndSubmitTransaction ===
-          "function"
+        "function"
       ) {
         try {
           const cleanPayload = {
@@ -329,13 +329,13 @@ export default function BuyTokenSection({
           {Array.from({ length: 4 }).map((_, idx) => (
             <div
               key={idx}
-              className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse  bg-[#0B0E14] borderToken"
-              style={{ width: 298, minHeight: 367 }}
+              className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse bg-[#0f1317] borderToken"
+              style={{ minHeight: 367, width: 298 }}
             >
               <div className="relative rounded-xl">
-                <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#181a1f]" />
+                <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#121419]" />
               </div>
-              <div className="bg-[#181a1f] py-[14px] px-5 rounded-xl rounded-t-none flex-1 flex flex-col justify-between">
+              <div className="bg-[#121419] py-[14px] px-5 rounded-xl rounded-t-none flex-1 flex flex-col justify-between">
                 <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
                   <div className="h-5 bg-[#181a1f] rounded w-2/3 mb-2" />
                   <div className="flex justify-between items-center">
@@ -439,8 +439,8 @@ export default function BuyTokenSection({
                           <p className="text-md font-medium text-white">
                             {token.creator
                               ? token.creator.slice(0, 4) +
-                                "..." +
-                                token.creator.slice(-3)
+                              "..." +
+                              token.creator.slice(-3)
                               : ""}
                           </p>
                         </div>
@@ -487,11 +487,10 @@ export default function BuyTokenSection({
                                 return (
                                   <div
                                     key={i}
-                                    className={`w-[4px] md:w-[6px] h-[12px] md:h-[16px] rounded-full transition-colors duration-200 ${
-                                      filled
-                                        ? "bg-gradient-to-r from-[#2D6BFF] to-[#00C6FB]"
-                                        : "bg-[#212121]"
-                                    }`}
+                                    className={`w-[4px] md:w-[6px] h-[12px] md:h-[16px] rounded-full transition-colors duration-200 ${filled
+                                      ? "bg-gradient-to-r from-[#2D6BFF] to-[#00C6FB]"
+                                      : "bg-[#212121]"
+                                      }`}
                                   ></div>
                                 );
                               })}
