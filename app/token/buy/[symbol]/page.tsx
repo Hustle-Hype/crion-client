@@ -516,19 +516,19 @@ export default function TokenDetailPage() {
                                 <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Market Cap:</p><p className="text-[12px] text-white font-medium">{formatNumberCompact(token.marketCap)}</p></div>
                                 <div className="flex items-center gap-1"><p className="text-[12px] text-[#7E7E7E]">Holders count:</p><p className="text-[12px] text-white font-medium">1</p></div>
                             </div>
-                            {/* TradingView Chart Widget - MVP version: currently showing BTCUSDT data. Will integrate real system data in future updates. */}
+                            {/* TradingView Chart Widget - Now showing APTOS (APTUSDT) data. */}
                             <div className="w-full" style={{ height: '480px' }}>
                                 <div className="h-full bg-[#232323] rounded-xl border border-[#313131] flex flex-col items-center justify-center relative overflow-hidden">
                                     <div className="w-full text-center py-2">
-                                        <span className="text-white/70 text-sm font-medium">This is the MVP version. The chart below displays Bitcoin (BTCUSDT) data from TradingView. Real system data will be integrated in future updates.</span>
+                                        <span className="text-white/70 text-sm font-medium">This chart displays Aptos (APTUSDT) data from TradingView. Real system data will be integrated in future updates.</span>
                                     </div>
                                     <iframe
-                                        src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_12345&symbol=BINANCE:BTCUSDT&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hidevolume=1&hidelegend=1&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en"
+                                        src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_12345&symbol=BINANCE:APTUSDT&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hidevolume=1&hidelegend=1&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en"
                                         style={{ width: '100%', height: '420px', border: 'none', borderRadius: '12px' }}
                                         allowFullScreen
                                         title="TradingView Chart"
                                     ></iframe>
-                                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/60 text-xs font-medium bg-[#232323]/80 px-2 py-1 rounded">TradingView Chart (Symbol: BTCUSDT)</span>
+                                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/60 text-xs font-medium bg-[#232323]/80 px-2 py-1 rounded">TradingView Chart (Symbol: APTUSDT)</span>
                                 </div>
                             </div>
                         </div>
