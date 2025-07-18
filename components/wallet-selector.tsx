@@ -158,9 +158,19 @@ export function WalletSelector() {
     router.push("/profile");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsDropdownOpen(false);
-    logout();
+    try {
+      await disconnect();
+    } catch (e) {
+      console.warn("Disconnect error:", e);
+    }
+    try {
+      await logout();
+    } catch (e) {
+      console.warn("Logout error:", e);
+    }
+    router.refresh();
     toast({
       title: "Logged out",
       description: "You have been successfully logged out.",

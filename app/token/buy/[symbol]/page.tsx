@@ -299,11 +299,12 @@ export default function TokenDetailPage() {
     if (!token) return;
     setBuying(true);
     try {
-      // Arguments: address, string, u64
+      // Arguments: creatorAddress, symbolBytes, amountU64
       const creatorAddress = token.creator.startsWith("0x")
         ? token.creator
         : `0x${token.creator}`;
       const symbolString = token.symbol;
+      const symbolBytes = Array.from(new TextEncoder().encode(symbolString));
       // Convert buyAmount to integer string (u64) with decimals
       let amountU64 = "0";
       try {
@@ -317,7 +318,7 @@ export default function TokenDetailPage() {
         type: "entry_function_payload",
         function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
         type_arguments: [],
-        arguments: [CONTRACT_ADDRESS, creatorAddress, symbolString, amountU64],
+        arguments: [creatorAddress, symbolBytes, amountU64],
       };
       let response;
       const walletAny = connectedWallet.wallet as any;
@@ -382,11 +383,12 @@ export default function TokenDetailPage() {
     if (!token) return;
     setSelling(true);
     try {
-      // Arguments: address, string, u64
+      // Arguments: creatorAddress, symbolBytes, amountU64
       const creatorAddress = token.creator.startsWith("0x")
         ? token.creator
         : `0x${token.creator}`;
       const symbolString = token.symbol;
+      const symbolBytes = Array.from(new TextEncoder().encode(symbolString));
       // Convert sellAmount to integer string (u64) with decimals
       let amountU64 = "0";
       try {
@@ -400,7 +402,7 @@ export default function TokenDetailPage() {
         type: "entry_function_payload",
         function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::sell_tokens`,
         type_arguments: [],
-        arguments: [CONTRACT_ADDRESS, creatorAddress, symbolString, amountU64],
+        arguments: [creatorAddress, symbolBytes, amountU64],
       };
       let response;
       const walletAny = connectedWallet.wallet as any;
@@ -756,11 +758,13 @@ export default function TokenDetailPage() {
                 <div className="flex items-center gap-1">
                   <p className="text-[12px] text-[#7E7E7E]">Network:</p>
                   <div className="flex items-center gap-2">
-                    <img
-                      alt="Aptos"
-                      className="w-4 h-4 rounded-full"
-                      src="/aptos-logo.png"
-                    />
+                    <div style={{ background: '#181a1f', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img
+                        alt="Aptos"
+                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTKX0VVgxldJmuDo_7lTxhnhqsTXlyTZcARQ&s"
+                        style={{ width: '18px', height: '18px', objectFit: 'contain', borderRadius: '9999px' }}
+                      />
+                    </div>
                     <span className="text-white font-medium text-xs md:text-sm leading-[1.43em] tracking-[-1%]">
                       Aptos Testnet
                     </span>
@@ -1071,7 +1075,7 @@ export default function TokenDetailPage() {
                   onClick={handleBuy}
                   disabled={buying}
                 >
-                  {buying ? "Đang gửi..." : "Buy"}
+                  {buying ? "Sending…" : "Buy"}
                 </button>
               </>
             )}
@@ -1181,7 +1185,7 @@ export default function TokenDetailPage() {
                   onClick={handleSell}
                   disabled={selling}
                 >
-                  {selling ? "Đang gửi..." : "Sell"}
+                  {selling ? "Sending…" : "Sell"}
                 </button>
               </>
             )}
