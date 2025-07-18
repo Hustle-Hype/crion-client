@@ -1555,7 +1555,7 @@ export default function PassportPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-teal-400">
-                          0.5
+                          1
                         </div>
                         <div className="text-sm text-gray-300">
                           Available Points
@@ -1840,7 +1840,7 @@ export default function PassportPage() {
                         ) : (
                           <div>
                             <div className="text-2xl font-bold text-teal-400">
-                              0.5
+                              1
                             </div>
                             <div className="text-sm text-gray-300">
                               Available Points
