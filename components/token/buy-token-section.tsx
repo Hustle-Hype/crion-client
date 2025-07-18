@@ -385,13 +385,27 @@ export default function BuyTokenSection({
                   />
                   <div className="absolute top-2 left-2 z-10">
                     {!token.saleStatus || token.saleStatus === "Bonding" ? (
-                      <div className="flex border-1 !border-[#24C85866] px-[10px] py-1 bg-[#24C85811] justify-center items-center max-h-[24px] rounded-full">
+                      <div
+                        className="flex border px-[10px] py-1 justify-center items-center max-h-[24px] rounded-full !border-[#24C85866]"
+                        style={{
+                          background: 'rgba(20, 20, 20, 0.55)',
+                          backdropFilter: 'blur(6px)',
+                          boxShadow: '0 2px 8px 0 rgba(0,0,0,0.12)',
+                        }}
+                      >
                         <p className="text-[11px] text-[#24C858] font-medium uppercase">
                           Bonding
                         </p>
                       </div>
                     ) : (
-                      <div className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] bg-gradient-to-r from-[#2D6BFF33] to-[#00C6FB33] shadow-sm min-h-[24px]">
+                      <div
+                        className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] min-h-[24px]"
+                        style={{
+                          background: 'rgba(20, 20, 20, 0.55)',
+                          backdropFilter: 'blur(6px)',
+                          boxShadow: '0 2px 8px 0 rgba(0,0,0,0.12)',
+                        }}
+                      >
                         <span className="text-[11px] text-[#2D6BFF] font-semibold uppercase tracking-wide drop-shadow-sm">
                           {token.saleStatus}
                         </span>

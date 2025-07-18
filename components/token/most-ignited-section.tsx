@@ -150,6 +150,8 @@ export default function MostIgnitedSection({
     }
   };
 
+  // Lọc chỉ các token đã graduated
+  const graduatedTokens = tokens.filter(token => token.isGraduated);
   return (
     <section className="pt-40 flex flex-col gap-y-16 md:gap-y-24 items-center justify-center relative">
       <div className="will-change-opacity absolute h-[414px] overflow-hidden w-[100dvw] left-1/2 -translate-x-1/2 -top-18 mask-[radial-gradient(90%_80%_at_50%_100%,#D9D9D9_80%,rgba(115,115,115,0)_100%)] md:mask-[radial-gradient(50%_65.7%_at_50%_34.3%,#D9D9D9_0%,rgba(115,115,115,0)_100%)]">
@@ -288,7 +290,7 @@ export default function MostIgnitedSection({
                   </div>
                 </div>
               ))
-              : tokens.slice(start, end).map((token, idx) => {
+              : graduatedTokens.slice(start, end).map((token, idx) => {
                 // Card style copied from buy-token-section
                 // (You may want to extract this as a shared component for DRY)
                 const threshold = Number(token.graduationThreshold);
@@ -332,13 +334,27 @@ export default function MostIgnitedSection({
                       <div className="absolute top-2 left-2 z-10">
                         {!token.saleStatus ||
                           token.saleStatus === "Bonding" ? (
-                          <div className="flex border-1 border-white px-[10px] bg-transparent py-2 justify-center items-center max-h-[24px] rounded-full !border-[#24C85866] bgStatusDeployed">
+                          <div
+                            className="flex border px-[10px] py-2 justify-center items-center max-h-[24px] rounded-full !border-[#24C85866]"
+                            style={{
+                              background: 'rgba(20, 20, 20, 0.55)',
+                              backdropFilter: 'blur(6px)',
+                              boxShadow: '0 2px 8px 0 rgba(0,0,0,0.12)',
+                            }}
+                          >
                             <p className="text-[11px] text-[#24C858] font-medium uppercase">
                               Bonding
                             </p>
                           </div>
                         ) : (
-                          <div className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] bg-gradient-to-r from-[#2D6BFF33] to-[#00C6FB33] shadow-sm min-h-[24px]">
+                          <div
+                            className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] min-h-[24px]"
+                            style={{
+                              background: 'rgba(20, 20, 20, 0.55)',
+                              backdropFilter: 'blur(6px)',
+                              boxShadow: '0 2px 8px 0 rgba(0,0,0,0.12)',
+                            }}
+                          >
                             <span className="text-[11px] text-[#2D6BFF] font-semibold uppercase tracking-wide drop-shadow-sm">
                               {token.saleStatus}
                             </span>
@@ -411,15 +427,24 @@ export default function MostIgnitedSection({
                                 const totalDots = 30;
                                 const lastFilledIndex = Math.floor(progress * (totalDots - 1));
                                 return [...Array(totalDots)].map((_, i) => {
-                                  const percent = i / (totalDots - 1);
-                                  const filled = percent <= progress;
-                                  return (
-                                    <div
-                                      key={i}
-                                      className={`h-[8px] md:h-[12px] w-[6px] md:w-[8px] rounded-full ${filled ? "bg-[#2D6BFF]" : "bg-[#181a1f]"
-                                        }`}
-                                    />
-                                  );
+                                  // All dots are black by default
+                                  // Only the completed portion is blue gradient
+                                  // Match buy-token-section: w-[4px] md:w-[6px] h-[12px] md:h-[16px] rounded-full
+                                  if (i <= lastFilledIndex) {
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="w-[7px] md:w-[10px] h-[12px] md:h-[16px] rounded-full bg-gradient-to-r from-[#2D6BFF] to-[#00C6FB] shadow-[0_0_8px_2px_rgba(45,107,255,0.35)] border border-[#23272f]"
+                                      />
+                                    );
+                                  } else {
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="w-[5px] md:w-[7px] h-[12px] md:h-[16px] rounded-full bg-[#212121] border border-[#23272f]"
+                                      />
+                                    );
+                                  }
                                 });
                               })()}
                             </div>
