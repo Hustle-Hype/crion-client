@@ -208,7 +208,7 @@ export default function TokenDetailPage() {
           break;
         }
       }
-      if (!creatorAddress) throw new Error("Không tìm thấy token này!");
+      if (!creatorAddress) throw new Error("Token not found!");
       // Call get_full_token_info
       const viewArgs: [string, number[]] = [
         creatorAddress,
@@ -222,7 +222,7 @@ export default function TokenDetailPage() {
         },
       });
       if (!fullInfo || !Array.isArray(fullInfo) || fullInfo.length < 25)
-        throw new Error("Không lấy được thông tin token!");
+        throw new Error("Failed to get token info!");
       setToken({
         symbol: decodeHexStringSafe(fullInfo[0]),
         name: decodeHexStringSafe(fullInfo[1]),
@@ -291,7 +291,7 @@ export default function TokenDetailPage() {
     if (!buyAmount || parseFloat(buyAmount) <= 0) {
       toast({
         title: "Invalid amount",
-        description: "Nhập số lượng muốn mua.",
+        description: "Enter the amount you want to buy.",
         variant: "destructive",
       });
       return;
@@ -335,10 +335,10 @@ export default function TokenDetailPage() {
         response = await safeSignAndSubmitTransaction(payload);
       }
       toast({
-        title: "Đã gửi giao dịch mua token!",
+        title: "Buy transaction sent!",
         description: (
           <div>
-            Đã gửi giao dịch mua {token.symbol}.<br />
+            Buy transaction for {token.symbol} has been sent.<br />
             {response?.hash && (
               <a
                 href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`}
@@ -346,7 +346,7 @@ export default function TokenDetailPage() {
                 rel="noopener noreferrer"
                 className="text-blue-500 underline"
               >
-                Xem trên explorer
+                View on explorer
               </a>
             )}
           </div>
@@ -375,7 +375,7 @@ export default function TokenDetailPage() {
     if (!sellAmount || parseFloat(sellAmount) <= 0) {
       toast({
         title: "Invalid amount",
-        description: "Nhập số lượng muốn bán.",
+        description: "Enter the amount you want to sell.",
         variant: "destructive",
       });
       return;
@@ -419,10 +419,10 @@ export default function TokenDetailPage() {
         response = await safeSignAndSubmitTransaction(payload);
       }
       toast({
-        title: "Đã gửi giao dịch bán token!",
+        title: "Sell transaction sent!",
         description: (
           <div>
-            Đã gửi giao dịch bán {token.symbol}.<br />
+            Sell transaction for {token.symbol} has been sent.<br />
             {response?.hash && (
               <a
                 href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`}
@@ -430,7 +430,7 @@ export default function TokenDetailPage() {
                 rel="noopener noreferrer"
                 className="text-blue-500 underline"
               >
-                Xem trên explorer
+                View on explorer
               </a>
             )}
           </div>

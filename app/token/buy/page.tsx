@@ -219,12 +219,12 @@ export default function BuyTokenPage() {
                 response = await safeSignAndSubmitTransaction(payload);
             }
             toast({
-                title: "Đã gửi giao dịch mua token!",
+                title: "Buy transaction sent!",
                 description: (
                     <div>
-                        Đã gửi giao dịch mua {token.symbol}.<br />
+                        Buy transaction for {token.symbol} has been sent.<br />
                         {response?.hash && (
-                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Xem trên explorer</a>
+                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View on explorer</a>
                         )}
                     </div>
                 )
