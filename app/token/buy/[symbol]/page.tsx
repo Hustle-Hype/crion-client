@@ -317,7 +317,7 @@ export default function TokenDetailPage() {
         type: "entry_function_payload",
         function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::buy_tokens`,
         type_arguments: [],
-        arguments: [creatorAddress, symbolString, amountU64],
+        arguments: [CONTRACT_ADDRESS, creatorAddress, symbolString, amountU64],
       };
       let response;
       const walletAny = connectedWallet.wallet as any;
@@ -400,7 +400,7 @@ export default function TokenDetailPage() {
         type: "entry_function_payload",
         function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::sell_tokens`,
         type_arguments: [],
-        arguments: [creatorAddress, symbolString, amountU64],
+        arguments: [CONTRACT_ADDRESS, creatorAddress, symbolString, amountU64],
       };
       let response;
       const walletAny = connectedWallet.wallet as any;
@@ -699,8 +699,8 @@ export default function TokenDetailPage() {
               aria-controls="overview-tab"
               data-state={activeTab === "overview" ? "active" : "inactive"}
               className={`relative inline-flex items-center justify-center whitespace-nowrap font-medium text-white/40 ring-offset-background transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white data-[state=active]:font-medium hover:text-white/90 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent after:transition-all after:duration-200 ${activeTab === "overview"
-                  ? "text-white font-medium after:bg-[#2D6BFF]"
-                  : ""
+                ? "text-white font-medium after:bg-[#2D6BFF]"
+                : ""
                 } hover:after:bg-[#2D6BFF]/30 px-4 py-3 text-sm md:text-base`}
               onClick={() => setActiveTab("overview")}
             >
@@ -713,8 +713,8 @@ export default function TokenDetailPage() {
               aria-controls="history-tab"
               data-state={activeTab === "history" ? "active" : "inactive"}
               className={`relative inline-flex items-center justify-center whitespace-nowrap font-medium text-white/40 ring-offset-background transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white data-[state=active]:font-medium hover:text-white/90 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent after:transition-all after:duration-200 ${activeTab === "history"
-                  ? "text-white font-medium after:bg-[#2D6BFF]"
-                  : ""
+                ? "text-white font-medium after:bg-[#2D6BFF]"
+                : ""
                 } hover:after:bg-[#2D6BFF]/30 px-4 py-3 text-sm md:text-base`}
               onClick={() => setActiveTab("history")}
             >
@@ -727,8 +727,8 @@ export default function TokenDetailPage() {
               aria-controls="chat-tab"
               data-state={activeTab === "chat" ? "active" : "inactive"}
               className={`relative inline-flex items-center justify-center whitespace-nowrap font-medium text-white/40 ring-offset-background transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white data-[state=active]:font-medium hover:text-white/90 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-transparent after:transition-all after:duration-200 ${activeTab === "chat"
-                  ? "text-white font-medium after:bg-[#2D6BFF]"
-                  : ""
+                ? "text-white font-medium after:bg-[#2D6BFF]"
+                : ""
                 } hover:after:bg-[#2D6BFF]/30 px-4 py-3 text-sm md:text-base`}
               onClick={() => setActiveTab("chat")}
             >
@@ -946,8 +946,8 @@ export default function TokenDetailPage() {
             <div className="flex bg-[#181a1f] rounded-lg p-1 mb-2 border">
               <button
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${buyingTab === "buy"
-                    ? "bg-[#4BD467] text-white shadow-sm"
-                    : "text-white/60 hover:text-white"
+                  ? "bg-[#4BD467] text-white shadow-sm"
+                  : "text-white/60 hover:text-white"
                   }`}
                 onClick={() => setBuyingTab("buy")}
                 disabled={buyingTab === "buy"}
@@ -956,8 +956,8 @@ export default function TokenDetailPage() {
               </button>
               <button
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${buyingTab === "sell"
-                    ? "bg-[#F75C5E] text-white shadow-sm"
-                    : "text-white/60 hover:text-white"
+                  ? "bg-[#F75C5E] text-white shadow-sm"
+                  : "text-white/60 hover:text-white"
                   }`}
                 onClick={() => setBuyingTab("sell")}
                 disabled={buyingTab === "sell"}
@@ -1384,8 +1384,8 @@ export default function TokenDetailPage() {
                           <div
                             key={i}
                             className={`h-[12px] md:h-[16px] rounded-full transition-colors duration-200 ${filled
-                                ? "bg-gradient-to-r from-[#2D6BFF] to-[#00C6FB]"
-                                : "bg-[#212121]"
+                              ? "bg-gradient-to-r from-[#2D6BFF] to-[#00C6FB]"
+                              : "bg-[#212121]"
                               } w-full`}
                           ></div>
                         );
