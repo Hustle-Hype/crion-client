@@ -72,7 +72,7 @@ export function WalletSelector() {
     {
       name: "Petra",
       icon: (
-        <img src="/wallet-icons/petra.svg" alt="Petra" className="w-8 h-8" />
+        <img src="https://play-lh.googleusercontent.com/Jr9mlVzTOG_1uJPUrxoOR7llaQIpBYNxT5hZw0BUqaqjN1Cqsky-RjaTyAorkFlMZQ" alt="Petra" className="w-8 h-8" />
       ),
       status: "INSTALLED",
       installed: typeof window !== "undefined" && !!(window as any).aptos,
@@ -81,7 +81,7 @@ export function WalletSelector() {
       name: "Martian",
       icon: (
         <img
-          src="/wallet-icons/martian.svg"
+          src="https://media.licdn.com/dms/image/v2/D4E0BAQHH3hG58JyO5g/company-logo_200_200/company-logo_200_200/0/1665546279144/martian_wallet_logo?e=2147483647&v=beta&t=PLFzWqbo5juxYgg67WNTiCxmdG76pZSkWBQ-ztjeIBA"
           alt="Martian"
           className="w-8 h-8"
         />
@@ -92,7 +92,7 @@ export function WalletSelector() {
     {
       name: "Pontem",
       icon: (
-        <img src="/wallet-icons/pontem.svg" alt="Pontem" className="w-8 h-8" />
+        <img src="https://play-lh.googleusercontent.com/OgJJCXTV-hIpZ0vOQuvEAiuRmHtzkIYhWZoOA348cyagjobMeMomiLW0ucJzkaL7okK7" alt="Pontem" className="w-8 h-8" />
       ),
       status: "INSTALLED",
       installed: false,
@@ -100,25 +100,12 @@ export function WalletSelector() {
     {
       name: "Fewcha",
       icon: (
-        <img src="/wallet-icons/fewcha.svg" alt="Fewcha" className="w-8 h-8" />
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9t0vL3O88rswSX2jlCGxzpNnjCa1XfJBHVQ&s" alt="Fewcha" className="w-8 h-8" />
       ),
       status: "INSTALLED",
       installed: false,
     },
-    {
-      name: "Spika",
-      icon: (
-        <img src="/wallet-icons/spika.svg" alt="Spika" className="w-8 h-8" />
-      ),
-      status: "INSTALLED",
-      installed: false,
-    },
-    {
-      name: "Rise",
-      icon: <img src="/wallet-icons/rise.svg" alt="Rise" className="w-8 h-8" />,
-      status: "INSTALLED",
-      installed: false,
-    },
+
     {
       name: "All Wallets",
       icon: (

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { WalletSelector } from "@/components/wallet-selector";
 
 const menuItems = [
-  { name: "Explore", href: "#link" },
+
   { name: "Passport", href: "/passport" },
 ];
 
@@ -67,7 +67,12 @@ export const HomeHeader = () => {
                     <li key={index} className="whitespace-nowrap">
                       <Link
                         href={item.href}
-                        className="text-secondary transition duration-400 hover:text-primary font-mono uppercase"
+                        className="text-secondary transition duration-400 hover:text-primary font-mono uppercase cursor-pointer"
+                        tabIndex={0}
+                        onClick={e => {
+                          e.preventDefault();
+                          window.location.href = item.href;
+                        }}
                       >
                         <HyperText>{item.name}</HyperText>
                       </Link>
@@ -81,8 +86,13 @@ export const HomeHeader = () => {
                     <li key={index}>
                       <Link
                         href={item.href}
-                        className="text-muted-foreground hover:text-accent-foreground block duration-150"
-                        onClick={() => setMenuState(false)}
+                        className="text-muted-foreground hover:text-accent-foreground block duration-150 cursor-pointer"
+                        tabIndex={0}
+                        onClick={e => {
+                          e.preventDefault();
+                          setMenuState(false);
+                          window.location.href = item.href;
+                        }}
                       >
                         <span>{item.name}</span>
                       </Link>
