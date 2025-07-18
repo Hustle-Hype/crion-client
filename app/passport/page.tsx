@@ -1,3 +1,5 @@
+// Returns points for each provider
+
 "use client";
 
 import React from "react";
@@ -213,9 +215,9 @@ function PassportOverview({
             <p className="text-gray-500 dark:text-gray-400">
               {userData.primaryWallet
                 ? `${userData.primaryWallet.slice(
-                    0,
-                    6
-                  )}...${userData.primaryWallet.slice(-4)}`
+                  0,
+                  6
+                )}...${userData.primaryWallet.slice(-4)}`
                 : "No wallet provided"}
             </p>
           </div>
@@ -280,13 +282,12 @@ function PassportOverview({
               {walletLinks.map((wallet, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700"
+                  className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border-2 border-green-500 shadow-green-200 dark:shadow-green-800"
                 >
                   <div className="flex items-center space-x-3">
                     <div
-                      className={`w-3 h-3 rounded-full ${
-                        wallet.isPrimary ? "bg-green-500" : "bg-gray-400"
-                      }`}
+                      className={`w-3 h-3 rounded-full ${wallet.isPrimary ? "bg-green-500" : "bg-gray-400"
+                        }`}
                     ></div>
                     <div>
                       <code className="text-sm font-mono text-gray-900 dark:text-white">
@@ -361,7 +362,19 @@ function SocialConnections({
       minute: "2-digit",
     });
   };
-
+  const getProviderPoints = (provider: string, link: any) => {
+    if (provider === "google") return 1;
+    if (provider === "twitter") return 1.5;
+    if (provider === "github") {
+      // Assume link.commitsDays is available, otherwise default to 0
+      const days = link.commitsDays || 0;
+      if (days >= 120) return 2.3;
+      if (days >= 60) return 1.9;
+      if (days >= 30) return 1.9;
+      return 0;
+    }
+    return 0;
+  };
   return (
     <div className="bg-[#0B0E14] rounded-3xl shadow-xl p-6 border border-gray-200 dark:border-gray-800">
       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
@@ -379,7 +392,7 @@ function SocialConnections({
             {socialLinks.map((link, index) => (
               <div
                 key={`${link.provider}-${link.socialId}-${index}`}
-                className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-700 animate-in slide-in-from-top duration-300"
+                className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border-2 border-green-700 hover:border-green-500 animate-in slide-in-from-top duration-300"
               >
                 <div className="flex items-center space-x-3">
                   {getSocialIcon(link.provider)}
@@ -394,6 +407,8 @@ function SocialConnections({
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
+                    <div className="text-lg font-bold text-white mb-1">Points gained</div>
+                    <div className="text-2xl font-bold text-teal-400">{getProviderPoints(link.provider, link)}</div>
                     <p className="text-xs text-green-600 dark:text-green-400 font-medium">
                       ✓ Verified
                     </p>
@@ -470,18 +485,18 @@ function SocialConnections({
           {["google", "twitter", "github"].filter(
             (provider) => !isProviderLinked(provider)
           ).length === 0 && (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FaTrophy className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <div className="text-center py-6">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <FaTrophy className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                  🎉 All social accounts connected!
+                </p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                  You're all set. Your digital passport is complete.
+                </p>
               </div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                🎉 All social accounts connected!
-              </p>
-              <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                You're all set. Your digital passport is complete.
-              </p>
-            </div>
-          )}
+            )}
           {/* Show message when there are providers available but none connected yet */}
           {socialLinks.length === 0 &&
             ["google", "twitter", "github"].filter(
@@ -958,9 +973,8 @@ export default function PassportPage() {
 
             toast({
               title: "Success",
-              description: `${
-                provider.charAt(0).toUpperCase() + provider.slice(1)
-              } account linked successfully`,
+              description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+                } account linked successfully`,
             });
 
             // Force immediate UI update
@@ -1009,9 +1023,8 @@ export default function PassportPage() {
       if (socialLinks.some((link) => link.provider === provider)) {
         toast({
           title: "Already Connected",
-          description: `${
-            provider.charAt(0).toUpperCase() + provider.slice(1)
-          } account is already linked`,
+          description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+            } account is already linked`,
         });
         setLoading(null);
         return;
@@ -1091,9 +1104,8 @@ export default function PassportPage() {
             }
             toast({
               title: "Success",
-              description: `${
-                provider.charAt(0).toUpperCase() + provider.slice(1)
-              } account linked successfully`,
+              description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+                } account linked successfully`,
             });
             return;
           }
@@ -1135,17 +1147,15 @@ export default function PassportPage() {
                   );
                   toast({
                     title: "Success",
-                    description: `${
-                      provider.charAt(0).toUpperCase() + provider.slice(1)
-                    } account linked successfully`,
+                    description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+                      } account linked successfully`,
                   });
                 } else if (loading === provider) {
                   console.log("Connection may have been cancelled or failed");
                   toast({
                     title: "Cancelled",
-                    description: `${
-                      provider.charAt(0).toUpperCase() + provider.slice(1)
-                    } linking was cancelled or failed`,
+                    description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+                      } linking was cancelled or failed`,
                   });
                 }
               }, 500); // Give time for state to update
@@ -1154,9 +1164,8 @@ export default function PassportPage() {
               if (loading === provider) {
                 toast({
                   title: "Cancelled",
-                  description: `${
-                    provider.charAt(0).toUpperCase() + provider.slice(1)
-                  } linking was cancelled`,
+                  description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+                    } linking was cancelled`,
                 });
               }
             }
@@ -1181,9 +1190,8 @@ export default function PassportPage() {
               // Show immediate success feedback
               toast({
                 title: "Success",
-                description: `${
-                  provider.charAt(0).toUpperCase() + provider.slice(1)
-                } account linked successfully`,
+                description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+                  } account linked successfully`,
               });
 
               // Refresh data
@@ -1217,9 +1225,8 @@ export default function PassportPage() {
         toast({
           variant: "destructive",
           title: "Timeout",
-          description: `${
-            provider.charAt(0).toUpperCase() + provider.slice(1)
-          } linking timed out. Please try again.`,
+          description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+            } linking timed out. Please try again.`,
         });
       }, 5 * 60 * 1000); // 5 minutes
     } catch (error) {
@@ -1242,8 +1249,7 @@ export default function PassportPage() {
     console.log("handleSocialUnlink called with provider:", provider);
     if (
       !confirm(
-        `Are you sure you want to unlink your ${
-          provider.charAt(0).toUpperCase() + provider.slice(1)
+        `Are you sure you want to unlink your ${provider.charAt(0).toUpperCase() + provider.slice(1)
         } account?`
       )
     ) {
@@ -1272,9 +1278,8 @@ export default function PassportPage() {
 
         toast({
           title: "Success",
-          description: `${
-            provider.charAt(0).toUpperCase() + provider.slice(1)
-          } account unlinked successfully`,
+          description: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+            } account unlinked successfully`,
         });
 
         // Force immediate UI update
@@ -1473,263 +1478,7 @@ export default function PassportPage() {
           <div className="bg-[#0B0E14] min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
               {/* Blockchain & Crypto Networks Section */}
-              <div className="mb-12">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-3xl font-bold text-white mb-2">
-                      Blockchain & Crypto Networks
-                    </h2>
-                    <p className="text-gray-400">
-                      Connect your blockchain-based profiles and assets to prove
-                      your identity.
-                    </p>
-                  </div>
-                  <button className="text-gray-400 hover:text-gray-300">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Ethereum - Connected to GitHub logic */}
-                  <div className="hover-grid bg-[#0B0E14] border border-blue-700 rounded-2xl p-6 text-white transition-all duration-300 hover:border-blue-500 cursor-pointer">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <path d="M12 0L5.82 8.32L12 11.45L18.18 8.32L12 0ZM12 12.54L5.82 9.41L12 24L18.18 9.41L12 12.54Z" />
-                        </svg>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-teal-400">
-                          22.5
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Available Points
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">Ethereum</h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Verify Ethereum activity.
-                    </p>
-                    <button
-                      disabled={true}
-                      className="w-full bg-gray-600 text-gray-400 py-3 rounded-xl font-semibold transition-colors cursor-not-allowed"
-                    >
-                      Coming Soon
-                    </button>
-                  </div>
-
-                  {/* NFT - Connected to Twitter logic */}
-                  <div className="hover-grid bg-[#0B0E14] border border-blue-700 rounded-2xl p-6 text-white transition-all duration-300 hover:border-blue-500 cursor-pointer">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 2h10v10H7V7zm2 2v6h6V9H9z" />
-                        </svg>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-teal-400">
-                          22.1
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Available Points
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">NFT</h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Connect your Ethereum wallet to verify your Ethereum
-                      Mainnet NFTs.
-                    </p>
-                    <button
-                      disabled={true}
-                      className="w-full bg-gray-600 text-gray-400 py-3 rounded-xl font-semibold transition-colors cursor-not-allowed"
-                    >
-                      Coming Soon
-                    </button>
-                  </div>
-
-                  {/* GTC Staking - Connected to Google logic */}
-                  <div className="hover-grid bg-[#0B0E14] border border-blue-700 rounded-2xl p-6 text-white transition-all duration-300 hover:border-blue-500 cursor-pointer">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <circle cx="12" cy="12" r="3" />
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          />
-                        </svg>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-teal-400">
-                          12.5
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Available Points
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">GTC Staking</h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Stake GTC to boost your trust in the Gitcoin ecosystem.
-                    </p>
-                    <button
-                      disabled={true}
-                      className="w-full bg-gray-600 text-gray-400 py-3 rounded-xl font-semibold transition-colors cursor-not-allowed"
-                    >
-                      Coming Soon
-                    </button>
-                  </div>
-
-                  {/* Idena - Fake */}
-                  <div className="hover-grid bg-[#0B0E14] border border-blue-700 rounded-2xl p-6 text-white transition-all duration-300 hover:border-blue-500 cursor-pointer">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <div className="w-6 h-6 bg-white rounded-full"></div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-teal-400">
-                          9.7
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Available Points
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">Idena</h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Prove Your Unique Humanity with Idena
-                    </p>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
-                      Connect
-                    </button>
-                  </div>
-
-                  {/* Gitcoin - Fake */}
-                  <div className="hover-grid bg-[#0B0E14] border border-blue-700 rounded-2xl p-6 text-white transition-all duration-300 hover:border-blue-500 cursor-pointer">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 9 5.16.74 9-3.45 9-9V7l-10-5z" />
-                        </svg>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-teal-400">
-                          6.2
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Available Points
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">Gitcoin</h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Verify your participation in Gitcoin Grants rounds.
-                    </p>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
-                      Connect
-                    </button>
-                  </div>
-
-                  {/* Phone Verification - Fake */}
-                  <div className="hover-grid bg-[#0B0E14] border border-blue-700 rounded-2xl p-6 text-white transition-all duration-300 hover:border-blue-500 cursor-pointer">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
-                        </svg>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-teal-400">
-                          1.5
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Available Points
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">
-                      Phone Verification
-                    </h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Connect to Zeronym by Holonym to verify your phone number.
-                    </p>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
-                      Connect
-                    </button>
-                  </div>
-
-                  {/* Guild Membership - Fake */}
-                  <div className="hover-grid bg-[#0B0E14] border border-blue-700 rounded-2xl p-6 text-white transition-all duration-300 hover:border-blue-500 cursor-pointer">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-teal-400">
-                          0.7
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          Available Points
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">
-                      Guild Membership and Roles
-                    </h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Connect to Guild to verify your membership in open source
-                      communities.
-                    </p>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
-                      Connect
-                    </button>
-                  </div>
-                </div>
-              </div>
 
               {/* Social & Professional Platforms Section */}
               <div className="mb-12">
@@ -1825,30 +1574,28 @@ export default function PassportPage() {
 
                   {/* Twitter */}
                   <div
-                    className={`hover-grid ${
-                      socialLinks.some((link) => link.provider === "twitter")
-                        ? "bg-[#0B0E14] border-green-700 hover:border-green-500"
-                        : "bg-[#0B0E14] border-blue-700 hover:border-blue-500"
-                    } rounded-2xl p-6 text-white transition-all duration-300 cursor-pointer relative`}
+                    className={`hover-grid ${socialLinks.some((link) => link.provider === "twitter")
+                      ? "bg-[#0B0E14] border-green-700 hover:border-green-500"
+                      : "bg-[#0B0E14] border-blue-700 hover:border-blue-500"
+                      } rounded-2xl p-6 text-white transition-all duration-300 cursor-pointer relative`}
                   >
                     {socialLinks.some(
                       (link) => link.provider === "twitter"
                     ) && (
-                      <div className="absolute top-4 right-4">
-                        <span className="bg-teal-500 text-black px-2 py-1 rounded text-xs font-semibold">
-                          Verified
-                        </span>
-                      </div>
-                    )}
+                        <div className="absolute top-4 right-4">
+                          <span className="bg-teal-500 text-black px-2 py-1 rounded text-xs font-semibold">
+                            Verified
+                          </span>
+                        </div>
+                      )}
                     <div className="flex items-center justify-between mb-4">
                       <div
-                        className={`w-12 h-12 ${
-                          socialLinks.some(
-                            (link) => link.provider === "twitter"
-                          )
-                            ? "bg-green-600"
-                            : "bg-blue-600"
-                        } rounded-xl flex items-center justify-center`}
+                        className={`w-12 h-12 ${socialLinks.some(
+                          (link) => link.provider === "twitter"
+                        )
+                          ? "bg-green-600"
+                          : "bg-blue-600"
+                          } rounded-xl flex items-center justify-center`}
                       >
                         <svg
                           className="w-6 h-6"
@@ -1867,7 +1614,7 @@ export default function PassportPage() {
                               Points gained
                             </div>
                             <div className="text-2xl font-bold text-teal-400">
-                              2.5
+                              1.5
                             </div>
                             <div className="w-16 h-2 bg-gray-600 rounded-full mt-2">
                               <div className="w-1/2 h-full bg-teal-400 rounded-full"></div>
@@ -1876,7 +1623,7 @@ export default function PassportPage() {
                         ) : (
                           <div>
                             <div className="text-2xl font-bold text-teal-400">
-                              2.5
+                              1.5
                             </div>
                             <div className="text-sm text-gray-300">
                               Available Points
@@ -1912,11 +1659,10 @@ export default function PassportPage() {
                           : handleSocialLink("twitter")
                       }
                       disabled={loading === "twitter"}
-                      className={`w-full ${
-                        socialLinks.some((link) => link.provider === "twitter")
-                          ? "bg-green-600 hover:bg-green-700"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      } text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50`}
+                      className={`w-full ${socialLinks.some((link) => link.provider === "twitter")
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                        } text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50`}
                     >
                       {loading === "twitter" ? (
                         <div className="flex items-center justify-center">
@@ -1928,8 +1674,8 @@ export default function PassportPage() {
                             : "Connecting..."}
                         </div>
                       ) : socialLinks.some(
-                          (link) => link.provider === "twitter"
-                        ) ? (
+                        (link) => link.provider === "twitter"
+                      ) ? (
                         "Disconnect"
                       ) : (
                         "Connect"
@@ -1939,11 +1685,10 @@ export default function PassportPage() {
 
                   {/* GitHub - Blue-black when not connected, green-black when connected */}
                   <div
-                    className={`hover-grid ${
-                      socialLinks.some((link) => link.provider === "github")
-                        ? "bg-[#0B0E14] border-green-700 hover:border-green-500"
-                        : "bg-[#0B0E14] border-blue-700 hover:border-blue-500"
-                    } rounded-2xl p-6 text-white transition-all duration-300 cursor-pointer relative`}
+                    className={`hover-grid ${socialLinks.some((link) => link.provider === "github")
+                      ? "bg-[#0B0E14] border-green-700 hover:border-green-500"
+                      : "bg-[#0B0E14] border-blue-700 hover:border-blue-500"
+                      } rounded-2xl p-6 text-white transition-all duration-300 cursor-pointer relative`}
                   >
                     {socialLinks.some((link) => link.provider === "github") && (
                       <div className="absolute top-4 right-4">
@@ -1954,11 +1699,10 @@ export default function PassportPage() {
                     )}
                     <div className="flex items-center justify-between mb-4">
                       <div
-                        className={`w-12 h-12 ${
-                          socialLinks.some((link) => link.provider === "github")
-                            ? "bg-green-600"
-                            : "bg-blue-600"
-                        } rounded-xl flex items-center justify-center`}
+                        className={`w-12 h-12 ${socialLinks.some((link) => link.provider === "github")
+                          ? "bg-green-600"
+                          : "bg-blue-600"
+                          } rounded-xl flex items-center justify-center`}
                       >
                         <svg
                           className="w-6 h-6"
@@ -2022,11 +1766,10 @@ export default function PassportPage() {
                           : handleSocialLink("github")
                       }
                       disabled={loading === "github"}
-                      className={`w-full ${
-                        socialLinks.some((link) => link.provider === "github")
-                          ? "bg-green-600 hover:bg-green-700"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      } text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50`}
+                      className={`w-full ${socialLinks.some((link) => link.provider === "github")
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                        } text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50`}
                     >
                       {loading === "github" ? (
                         <div className="flex items-center justify-center">
@@ -2038,8 +1781,8 @@ export default function PassportPage() {
                             : "Connecting..."}
                         </div>
                       ) : socialLinks.some(
-                          (link) => link.provider === "github"
-                        ) ? (
+                        (link) => link.provider === "github"
+                      ) ? (
                         "Disconnect"
                       ) : (
                         "Connect"
@@ -2049,11 +1792,10 @@ export default function PassportPage() {
 
                   {/* Google - Blue-black when not connected, green-black when connected */}
                   <div
-                    className={`hover-grid ${
-                      socialLinks.some((link) => link.provider === "google")
-                        ? "bg-[#0B0E14] border-green-700 hover:border-green-500"
-                        : "bg-[#0B0E14] border-blue-700 hover:border-blue-500"
-                    } rounded-2xl p-6 text-white transition-all duration-300 cursor-pointer relative`}
+                    className={`hover-grid ${socialLinks.some((link) => link.provider === "google")
+                      ? "bg-[#0B0E14] border-green-700 hover:border-green-500"
+                      : "bg-[#0B0E14] border-blue-700 hover:border-blue-500"
+                      } rounded-2xl p-6 text-white transition-all duration-300 cursor-pointer relative`}
                   >
                     {socialLinks.some((link) => link.provider === "google") && (
                       <div className="absolute top-4 right-4">
@@ -2064,11 +1806,10 @@ export default function PassportPage() {
                     )}
                     <div className="flex items-center justify-between mb-4">
                       <div
-                        className={`w-12 h-12 ${
-                          socialLinks.some((link) => link.provider === "google")
-                            ? "bg-green-600"
-                            : "bg-blue-600"
-                        } rounded-xl flex items-center justify-center`}
+                        className={`w-12 h-12 ${socialLinks.some((link) => link.provider === "google")
+                          ? "bg-green-600"
+                          : "bg-blue-600"
+                          } rounded-xl flex items-center justify-center`}
                       >
                         <svg
                           className="w-6 h-6"
@@ -2090,7 +1831,7 @@ export default function PassportPage() {
                               Points gained
                             </div>
                             <div className="text-2xl font-bold text-teal-400">
-                              0.5
+                              1
                             </div>
                             <div className="w-16 h-2 bg-gray-600 rounded-full mt-2">
                               <div className="w-full h-full bg-teal-400 rounded-full"></div>
@@ -2134,11 +1875,10 @@ export default function PassportPage() {
                           : handleSocialLink("google")
                       }
                       disabled={loading === "google"}
-                      className={`w-full ${
-                        socialLinks.some((link) => link.provider === "google")
-                          ? "bg-green-600 hover:bg-green-700"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      } text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50`}
+                      className={`w-full ${socialLinks.some((link) => link.provider === "google")
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                        } text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50`}
                     >
                       {loading === "google" ? (
                         <div className="flex items-center justify-center">
@@ -2150,8 +1890,8 @@ export default function PassportPage() {
                             : "Connecting..."}
                         </div>
                       ) : socialLinks.some(
-                          (link) => link.provider === "google"
-                        ) ? (
+                        (link) => link.provider === "google"
+                      ) ? (
                         "Disconnect"
                       ) : (
                         "Connect"
