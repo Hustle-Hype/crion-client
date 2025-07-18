@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 const CONTRACT_ADDRESS =
-  "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
+  "0x845b1c620ba3e828749a20809f6aa960523aad5b73831f801051392a3286f91a";
 const MODULE_NAME = "fa_factory";
 
 const aptosConfig = new AptosConfig({

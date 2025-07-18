@@ -10,7 +10,7 @@ import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { toast } from "@/hooks/use-toast";
 
 const CONTRACT_ADDRESS =
-  "0x789aebdecec5bc128a2146e2b5b4b9c4111ad0b48c065ab1cd96871e20ac3e97";
+  "0x845b1c620ba3e828749a20809f6aa960523aad5b73831f801051392a3286f91a";
 const MODULE_NAME = "fa_factory";
 
 // Helper to show real-world value (divide by 10^decimals)
@@ -302,9 +302,8 @@ export default function SimpleCreateTokenPage() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <div
-                        className={`flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg relative ${
-                          step === i ? "text-white" : "text-white/[0.4]"
-                        }`}
+                        className={`flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg relative ${step === i ? "text-white" : "text-white/[0.4]"
+                          }`}
                         onClick={() => setStep(i)}
                       >
                         <span className="absolute inset-0 rounded-lg overflow-hidden">
@@ -335,9 +334,8 @@ export default function SimpleCreateTokenPage() {
                         </span>
                       </div>
                       <span
-                        className={`font-medium text-sm ${
-                          step === i ? "text-white" : "text-white/[0.64]"
-                        }`}
+                        className={`font-medium text-sm ${step === i ? "text-white" : "text-white/[0.64]"
+                          }`}
                       >
                         {s.label}
                       </span>
@@ -352,9 +350,8 @@ export default function SimpleCreateTokenPage() {
                 <div className="flex flex-col" key={i}>
                   <div className="flex items-center gap-4 mb-2">
                     <div
-                      className={`flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg relative ${
-                        step === i ? "text-white" : "text-white/[0.4]"
-                      }`}
+                      className={`flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg relative ${step === i ? "text-white" : "text-white/[0.4]"
+                        }`}
                       onClick={() => setStep(i)}
                     >
                       <span className="absolute inset-0 rounded-lg overflow-hidden">
@@ -385,9 +382,8 @@ export default function SimpleCreateTokenPage() {
                       </span>
                     </div>
                     <span
-                      className={`font-medium text-base ${
-                        step === i ? "text-white" : "text-white/[0.64]"
-                      }`}
+                      className={`font-medium text-base ${step === i ? "text-white" : "text-white/[0.64]"
+                        }`}
                     >
                       {s.label}
                     </span>
@@ -395,9 +391,8 @@ export default function SimpleCreateTokenPage() {
                   {i < steps.length - 1 && (
                     <div className={`h-4 flex mb-3`}>
                       <div
-                        className={`w-px h-full ${
-                          step > i ? "bg-[#2563eb]" : "bg-white/20"
-                        } ml-3.5`}
+                        className={`w-px h-full ${step > i ? "bg-[#2563eb]" : "bg-white/20"
+                          } ml-3.5`}
                       ></div>
                     </div>
                   )}
@@ -1016,8 +1011,8 @@ export default function SimpleCreateTokenPage() {
                           return typeof addr === "string"
                             ? addr
                             : addr.toString
-                            ? addr.toString()
-                            : JSON.stringify(addr);
+                              ? addr.toString()
+                              : JSON.stringify(addr);
                         }
                         return "-";
                       })()}
