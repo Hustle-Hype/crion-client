@@ -466,6 +466,10 @@ export default function BuyTokenSection({
                         progressText = (progress * 100).toFixed(2) + "%";
                       }
                       const belowThreshold = reserve < threshold;
+                      // Calculate glow position to align with last filled dot
+                      const totalDots = 30;
+                      const lastFilledIndex = Math.floor(progress * (totalDots - 1));
+                      const glowLeft = (lastFilledIndex / (totalDots - 1)) * 100;
                       return (
                         <div className="flex flex-col gap-[6px]">
                           <div className="flex items-center justify-between">
@@ -481,8 +485,8 @@ export default function BuyTokenSection({
                           </div>
                           <div className="relative h-[12px] md:h-[16px] w-full">
                             <div className="flex gap-[3px] md:gap-1 items-center absolute top-0 left-0 right-0">
-                              {[...Array(30)].map((_, i) => {
-                                const percent = i / 29;
+                              {[...Array(totalDots)].map((_, i) => {
+                                const percent = i / (totalDots - 1);
                                 const filled = percent <= progress;
                                 return (
                                   <div
@@ -501,9 +505,9 @@ export default function BuyTokenSection({
                                 <div
                                   className="absolute h-[12px] md:h-[16px] rounded-full"
                                   style={{
-                                    left: `${progress * 100}%`,
+                                    left: `calc(${glowLeft}% )`,
                                     width: "23.8px",
-                                    transform: "translateX(-100%)",
+                                    transform: "translateX(-50%)",
                                     background:
                                       "linear-gradient(90deg, rgba(45,107,255,0) 0%, #2D6BFF 77%, #00C6FB 100%)",
                                     filter: "blur(4px)",
@@ -513,9 +517,9 @@ export default function BuyTokenSection({
                                 <div
                                   className="absolute h-[12px] md:h-[16px] rounded-full"
                                   style={{
-                                    left: `${progress * 100}%`,
+                                    left: `calc(${glowLeft}% )`,
                                     width: "17.8px",
-                                    transform: "translateX(-100%)",
+                                    transform: "translateX(-50%)",
                                     background:
                                       "linear-gradient(90deg, rgba(45,107,255,0) 0%, #2D6BFF 77%, #00C6FB 100%)",
                                     filter: "blur(8px)",

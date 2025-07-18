@@ -84,9 +84,8 @@ function BondingCurveProgress({
             return (
               <div
                 key={i}
-                className={`h-[8px] md:h-[12px] w-[6px] md:w-[8px] rounded-full ${
-                  filled ? "bg-[#FF9900]" : "bg-[#181a1f]"
-                }`}
+                className={`h-[8px] md:h-[12px] w-[6px] md:w-[8px] rounded-full ${filled ? "bg-[#FF9900]" : "bg-[#181a1f]"
+                  }`}
               />
             );
           })}
@@ -262,189 +261,195 @@ export default function MostIgnitedSection({
           <div className="flex gap-5 pb-2">
             {loading
               ? Array.from({ length: visibleCount }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse bg-[#0f1317] borderToken"
+                <div
+                  key={idx}
+                  className="flex flex-col z-10 rounded-xl min-w-[298px] max-w-[298px] w-full animate-pulse bg-[#0f1317] borderToken"
+                  style={{ minHeight: 367, width: 298 }}
+                >
+                  <div className="relative rounded-xl">
+                    <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#121419]" />
+                  </div>
+                  <div className="bg-[#121419] py-[14px] px-5 rounded-xl rounded-t-none flex-1 flex flex-col justify-between">
+                    <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
+                      <div className="h-5 bg-[#181a1f] rounded w-2/3 mb-2" />
+                      <div className="flex justify-between items-center">
+                        <div className="h-3 bg-[#181a1f] rounded w-1/4" />
+                        <div className="h-3 bg-[#181a1f] rounded w-1/4" />
+                      </div>
+                    </div>
+                    <div className="pt-5 flex flex-col gap-5 flex-1">
+                      <div className="flex justify-between items-center">
+                        <div className="h-4 bg-[#181a1f] rounded w-1/4" />
+                        <div className="h-4 bg-[#181a1f] rounded w-1/4" />
+                        <div className="h-4 bg-[#181a1f] rounded w-1/4" />
+                      </div>
+                      <div className="h-3 bg-[#181a1f] rounded w-full" />
+                    </div>
+                  </div>
+                </div>
+              ))
+              : tokens.slice(start, end).map((token, idx) => {
+                // Card style copied from buy-token-section
+                // (You may want to extract this as a shared component for DRY)
+                const threshold = Number(token.graduationThreshold);
+                const target = Number(token.graduationTarget);
+                const reserve = Number(token.reserve);
+                let progress = 0;
+                let progressText = "0%";
+                if (target > threshold) {
+                  if (reserve <= threshold) {
+                    progress = 0;
+                  } else if (reserve >= target) {
+                    progress = 1;
+                  } else {
+                    progress = (reserve - threshold) / (target - threshold);
+                  }
+                  progressText = (progress * 100).toFixed(2) + "%";
+                }
+                const belowThreshold = reserve < threshold;
+                return (
+                  <a
+                    key={token.symbol + idx}
+                    href={`/token/buy/${token.symbol}`}
+                    className="flex flex-col z-10 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-2 cursor-pointer borderToken min-w-[298px] max-w-[298px] w-full"
                     style={{ minHeight: 367, width: 298 }}
                   >
                     <div className="relative rounded-xl">
-                      <div className="rounded-xl min-h-[136px] max-h-[136px] w-full bg-[#121419]" />
-                    </div>
-                    <div className="bg-[#121419] py-[14px] px-5 rounded-xl rounded-t-none flex-1 flex flex-col justify-between">
-                      <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
-                        <div className="h-5 bg-[#181a1f] rounded w-2/3 mb-2" />
-                        <div className="flex justify-between items-center">
-                          <div className="h-3 bg-[#181a1f] rounded w-1/4" />
-                          <div className="h-3 bg-[#181a1f] rounded w-1/4" />
-                        </div>
-                      </div>
-                      <div className="pt-5 flex flex-col gap-5 flex-1">
-                        <div className="flex justify-between items-center">
-                          <div className="h-4 bg-[#181a1f] rounded w-1/4" />
-                          <div className="h-4 bg-[#181a1f] rounded w-1/4" />
-                          <div className="h-4 bg-[#181a1f] rounded w-1/4" />
-                        </div>
-                        <div className="h-3 bg-[#181a1f] rounded w-full" />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              : tokens.slice(start, end).map((token, idx) => {
-                  // Card style copied from buy-token-section
-                  // (You may want to extract this as a shared component for DRY)
-                  const threshold = Number(token.graduationThreshold);
-                  const target = Number(token.graduationTarget);
-                  const reserve = Number(token.reserve);
-                  let progress = 0;
-                  let progressText = "0%";
-                  if (target > threshold) {
-                    if (reserve <= threshold) {
-                      progress = 0;
-                    } else if (reserve >= target) {
-                      progress = 1;
-                    } else {
-                      progress = (reserve - threshold) / (target - threshold);
-                    }
-                    progressText = (progress * 100).toFixed(2) + "%";
-                  }
-                  const belowThreshold = reserve < threshold;
-                  return (
-                    <a
-                      key={token.symbol + idx}
-                      href={`/token/buy/${token.symbol}`}
-                      className="flex flex-col z-10 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-2 cursor-pointer borderToken min-w-[298px] max-w-[298px] w-full"
-                      style={{ minHeight: 367, width: 298 }}
-                    >
-                      <div className="relative rounded-xl">
-                        <img
-                          width="298"
-                          height="136"
-                          alt={token.name}
-                          className="rounded-xl min-h-[136px] max-h-[136px] object-cover w-full rounded-b-none"
-                          src={
-                            token.iconUrl ||
-                            "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-ngau.jpg"
-                          }
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-ngau.jpg";
-                          }}
-                        />
-                        <div className="absolute top-2 left-2 z-10">
-                          {!token.saleStatus ||
+                      <img
+                        width="298"
+                        height="136"
+                        alt={token.name}
+                        className="rounded-xl min-h-[136px] max-h-[136px] object-cover w-full rounded-b-none"
+                        src={
+                          token.iconUrl ||
+                          "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-ngau.jpg"
+                        }
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://anhdephd.vn/wp-content/uploads/2022/05/background-anime-ngau.jpg";
+                        }}
+                      />
+                      <div className="absolute top-2 left-2 z-10">
+                        {!token.saleStatus ||
                           token.saleStatus === "Bonding" ? (
-                            <div className="flex border-1 border-white px-[10px] bg-transparent py-2 justify-center items-center max-h-[24px] rounded-full !border-[#24C85866] bgStatusDeployed">
-                              <p className="text-[11px] text-[#24C858] font-medium uppercase">
-                                Bonding
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] bg-gradient-to-r from-[#2D6BFF33] to-[#00C6FB33] shadow-sm min-h-[24px]">
-                              <span className="text-[11px] text-[#2D6BFF] font-semibold uppercase tracking-wide drop-shadow-sm">
-                                {token.saleStatus}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex border-1 border-white px-[10px] bg-transparent py-2 justify-center items-center max-h-[24px] rounded-full !border-[#24C85866] bgStatusDeployed">
+                            <p className="text-[11px] text-[#24C858] font-medium uppercase">
+                              Bonding
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex px-3 py-1 items-center rounded-full border border-[#2D6BFF33] bg-gradient-to-r from-[#2D6BFF33] to-[#00C6FB33] shadow-sm min-h-[24px]">
+                            <span className="text-[11px] text-[#2D6BFF] font-semibold uppercase tracking-wide drop-shadow-sm">
+                              {token.saleStatus}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-[#181a1f] py-[14px] px-5 rounded-xl rounded-t-none">
+                      <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
+                        <p className="text-[20px] font-medium text-white line-clamp-1">
+                          {token.name}
+                        </p>
+                        <div className="flex justify-between items-center">
+                          <p className="text-[#707472] text-[12px] font-normal">
+                            {token.symbol}
+                          </p>
+                          <p className="text-[#707472] text-[12px] font-normal uppercase">
+                            {token.assetType}
+                          </p>
                         </div>
                       </div>
-                      <div className="bg-[#181a1f] py-[14px] px-5 rounded-xl rounded-t-none">
-                        <div className="flex flex-col gap-2 border-b border-b-[#FFFFFF1A] pb-5">
-                          <p className="text-[20px] font-medium text-white line-clamp-1">
-                            {token.name}
-                          </p>
-                          <div className="flex justify-between items-center">
-                            <p className="text-[#707472] text-[12px] font-normal">
-                              {token.symbol}
-                            </p>
+                      <div className="pt-5 flex flex-col gap-5">
+                        <div className="flex justify-between items-center">
+                          <div className="flex flex-col gap-1">
                             <p className="text-[#707472] text-[12px] font-normal uppercase">
-                              {token.assetType}
+                              Daily Volume
                             </p>
+                            <p className="text-md font-medium text-white">
+                              {formatNumberCompact(token.liquidity)}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[#707472] text-[12px] font-normal uppercase">
+                              MCap
+                            </p>
+                            <p className="text-md font-medium text-white">
+                              {formatNumberCompact(token.marketCap)}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[#707472] text-[12px] font-normal uppercase">
+                              CREATED BY
+                            </p>
+                            <div className="flex items-center gap-[6px]">
+                              <p className="text-md font-medium text-white">
+                                {token.creator
+                                  ? token.creator.slice(0, 4) +
+                                  "..." +
+                                  token.creator.slice(-3)
+                                  : ""}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        <div className="pt-5 flex flex-col gap-5">
-                          <div className="flex justify-between items-center">
-                            <div className="flex flex-col gap-1">
-                              <p className="text-[#707472] text-[12px] font-normal uppercase">
-                                Daily Volume
-                              </p>
-                              <p className="text-md font-medium text-white">
-                                {formatNumberCompact(token.liquidity)}
-                              </p>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <p className="text-[#707472] text-[12px] font-normal uppercase">
-                                MCap
-                              </p>
-                              <p className="text-md font-medium text-white">
-                                {formatNumberCompact(token.marketCap)}
-                              </p>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <p className="text-[#707472] text-[12px] font-normal uppercase">
-                                CREATED BY
-                              </p>
-                              <div className="flex items-center gap-[6px]">
-                                <p className="text-md font-medium text-white">
-                                  {token.creator
-                                    ? token.creator.slice(0, 4) +
-                                      "..." +
-                                      token.creator.slice(-3)
-                                    : ""}
-                                </p>
-                              </div>
-                            </div>
+                        {/* Bonding Curve Progress Bar */}
+                        <div className="flex flex-col gap-[6px]">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[#707472] text-[12px] font-normal">
+                              Bonding Curve Progress
+                            </p>
+                            <p
+                              className={`text-[#2D6BFF] text-[12px] font-normal`}
+                            >
+                              {progressText}
+                            </p>
                           </div>
-                          {/* Bonding Curve Progress Bar */}
-                          <div className="flex flex-col gap-[6px]">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[#707472] text-[12px] font-normal">
-                                Bonding Curve Progress
-                              </p>
-                              <p
-                                className={`text-[#2D6BFF] text-[12px] font-normal`}
-                              >
-                                {progressText}
-                              </p>
-                            </div>
-                            <div className="relative h-[12px] md:h-[16px] w-full">
-                              <div className="flex gap-[3px] md:gap-1 items-center absolute top-0 left-0 right-0">
-                                {[...Array(30)].map((_, i) => {
-                                  const percent = i / 29;
+                          <div className="relative h-[12px] md:h-[16px] w-full">
+                            <div className="flex gap-[3px] md:gap-1 items-center absolute top-0 left-0 right-0">
+                              {(() => {
+                                const totalDots = 30;
+                                const lastFilledIndex = Math.floor(progress * (totalDots - 1));
+                                return [...Array(totalDots)].map((_, i) => {
+                                  const percent = i / (totalDots - 1);
                                   const filled = percent <= progress;
                                   return (
                                     <div
                                       key={i}
-                                      className={`h-[8px] md:h-[12px] w-[6px] md:w-[8px] rounded-full ${
-                                        filled ? "bg-[#2D6BFF]" : "bg-[#181a1f]"
-                                      }`}
+                                      className={`h-[8px] md:h-[12px] w-[6px] md:w-[8px] rounded-full ${filled ? "bg-[#2D6BFF]" : "bg-[#181a1f]"
+                                        }`}
                                     />
                                   );
-                                })}
-                              </div>
-                              {/* Glow effect at progress end */}
-                              {!belowThreshold && (
-                                <>
-                                  <div
-                                    className="absolute h-[12px] md:h-[16px] rounded-full"
-                                    style={{
-                                      left: `${progress * 100}%`,
-                                      width: "23.8px",
-                                      transform: "translateX(-100%)",
-                                      background:
-                                        "linear-gradient(90deg, rgba(45,107,255,0) 0%, #2D6BFF 77%, #00C6FB 100%)",
-                                      filter: "blur(4px)",
-                                      opacity: 0.8,
-                                    }}
-                                  ></div>
-                                </>
-                              )}
+                                });
+                              })()}
                             </div>
+                            {/* Glow effect at progress end */}
+                            {!belowThreshold && (() => {
+                              const totalDots = 30;
+                              const lastFilledIndex = Math.floor(progress * (totalDots - 1));
+                              const glowLeft = (lastFilledIndex / (totalDots - 1)) * 100;
+                              return (
+                                <div
+                                  className="absolute h-[12px] md:h-[16px] rounded-full"
+                                  style={{
+                                    left: `calc(${glowLeft}% )`,
+                                    width: "23.8px",
+                                    transform: "translateX(-50%)",
+                                    background:
+                                      "linear-gradient(90deg, rgba(45,107,255,0) 0%, #2D6BFF 77%, #00C6FB 100%)",
+                                    filter: "blur(4px)",
+                                    opacity: 0.8,
+                                  }}
+                                ></div>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>
-                    </a>
-                  );
-                })}
+                    </div>
+                  </a>
+                );
+              })}
           </div>
         </div>
       </div>
