@@ -10,7 +10,7 @@ import { useConnectedWallet } from "@/hooks/wallet/useConnectedWallet";
 import { toast } from "@/hooks/use-toast";
 
 const CONTRACT_ADDRESS =
-  "0x845b1c620ba3e828749a20809f6aa960523aad5b73831f801051392a3286f91a";
+  "0x1fcb850b26673bb2fff7f388aaad125735edb1b7ac77335fb29b88ee16340dc4";
 const MODULE_NAME = "fa_factory";
 
 // Helper to show real-world value (divide by 10^decimals)
@@ -224,7 +224,7 @@ export default function SimpleCreateTokenPage() {
           title: "Token created successfully!",
           description: (
             <a
-              href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`}
+              href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=mainnet`}
               target="_blank"
               rel="noopener noreferrer"
               className="underline text-blue-600"

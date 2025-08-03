@@ -12,15 +12,15 @@ import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
 import { toast } from "@/hooks/use-toast";
 
 // Contract info (update to your deployed address)
-const CONTRACT_ADDRESS = "0x845b1c620ba3e828749a20809f6aa960523aad5b73831f801051392a3286f91a";
+const CONTRACT_ADDRESS = "0x1fcb850b26673bb2fff7f388aaad125735edb1b7ac77335fb29b88ee16340dc4";
 const MODULE_NAME = "fa_factory";
 
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 const aptosConfig = new AptosConfig({
-    network: Network.TESTNET,
+    network: Network.MAINNET,
     clientConfig: {
-        API_KEY: "AG-9W2L7VUVYZ8VCUMYY8VMRVMICKYNYC68H"
+        API_KEY: "AG-7DYJWSLTVG7HTH6DJXMNIZNWJCNFYCVUC"
     }
 });
 const aptos = new Aptos(aptosConfig);
@@ -224,7 +224,7 @@ export default function BuyTokenPage() {
                     <div>
                         Buy transaction for {token.symbol} has been sent.<br />
                         {response?.hash && (
-                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View on explorer</a>
+                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=mainnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View on explorer</a>
                         )}
                     </div>
                 )
