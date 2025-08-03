@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 // Setup Aptos SDK for balance fetch
-const aptosConfig = new AptosConfig({ network: Network.TESTNET });
+const aptosConfig = new AptosConfig({ network: Network.MAINNET });
 const aptos = new Aptos(aptosConfig);
 import { Button } from "@/components/ui/button";
 import { HyperText } from "@/components/hyper-text";
