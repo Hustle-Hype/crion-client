@@ -9,13 +9,13 @@ import { useCallback, useEffect, useState } from "react";
 import { getIssuerScore } from "@/lib/issuer-score";
 
 const CONTRACT_ADDRESS =
-  "0x845b1c620ba3e828749a20809f6aa960523aad5b73831f801051392a3286f91a";
+  "0x0237b076386435ea40da5076779dc9a3bf46ca07847aa84a2968eb10d43162d0";
 const MODULE_NAME = "fa_factory";
 
 const aptosConfig = new AptosConfig({
-  network: Network.TESTNET,
+  network: Network.MAINNET,
   clientConfig: {
-    API_KEY: "AG-9W2L7VUVYZ8VCUMYY8VMRVMICKYNYC68H",
+    API_KEY: "AG-7DYJWSLTVG7HTH6DJXMNIZNWJCNFYCVUC",
   },
 });
 const aptos = new Aptos(aptosConfig);
@@ -341,7 +341,7 @@ export default function TokenDetailPage() {
             Buy transaction for {token.symbol} has been sent.<br />
             {response?.hash && (
               <a
-                href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`}
+                href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=mainnet`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 underline"
@@ -425,7 +425,7 @@ export default function TokenDetailPage() {
             Sell transaction for {token.symbol} has been sent.<br />
             {response?.hash && (
               <a
-                href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`}
+                href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=mainnet`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 underline"
@@ -766,7 +766,7 @@ export default function TokenDetailPage() {
                       />
                     </div>
                     <span className="text-white font-medium text-xs md:text-sm leading-[1.43em] tracking-[-1%]">
-                      Aptos Testnet
+                      Aptos Mainnet
                     </span>
                   </div>
                 </div>

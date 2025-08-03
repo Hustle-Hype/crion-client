@@ -12,15 +12,19 @@ import { useSafeWallet } from "@/hooks/wallet/useSafeWallet";
 import { toast } from "@/hooks/use-toast";
 
 // Contract info (update to your deployed address)
-const CONTRACT_ADDRESS = "0x845b1c620ba3e828749a20809f6aa960523aad5b73831f801051392a3286f91a";
+const CONTRACT_ADDRESS = "0x0237b076386435ea40da5076779dc9a3bf46ca07847aa84a2968eb10d43162d0";
 const MODULE_NAME = "fa_factory";
 
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 const aptosConfig = new AptosConfig({
-    network: Network.TESTNET,
+    network: Network.MAINNET,
+    fullnode: "https://fullnode.mainnet.aptoslabs.com/v1",
+    indexer: "https://indexer.mainnet.aptoslabs.com/v1/graphql",
     clientConfig: {
-        API_KEY: "AG-9W2L7VUVYZ8VCUMYY8VMRVMICKYNYC68H"
+        HEADERS: {
+            "Authorization": `Bearer AG-7DYJWSLTVG7HTH6DJXMNIZNWJCNFYCVUC`
+        }
     }
 });
 const aptos = new Aptos(aptosConfig);
@@ -98,16 +102,30 @@ export default function BuyTokenPage() {
     const fetchTokens = useCallback(async () => {
         setLoading(true);
         try {
+            console.log("Fetching tokens from contract:", CONTRACT_ADDRESS);
+
+            // Try to get events with more recent data
             const events = await aptos.getModuleEventsByEventType({
                 eventType: `${CONTRACT_ADDRESS}::${MODULE_NAME}::TokenCreated`,
                 minimumLedgerVersion: 0,
+                options: {
+                    limit: 100,
+                    orderBy: [{ transaction_version: "desc" }]
+                }
             });
+
+            console.log("Found events:", events.length);
+
             const tokens: TokenInfo[] = [];
             for (let i = 0; i < events.length; i++) {
                 const event = events[i];
                 try {
                     const eventData = event.data as any;
                     let creatorAddress = eventData.creator;
+
+                    console.log("Processing event:", i, "Creator:", creatorAddress);
+
+                    // If creator is missing or invalid, get from transaction
                     if (event.transaction_version && (!creatorAddress || creatorAddress.includes('0000'))) {
                         try {
                             const txnDetails = await aptos.getTransactionByVersion({
@@ -115,11 +133,21 @@ export default function BuyTokenPage() {
                             });
                             if (txnDetails && 'sender' in txnDetails) {
                                 creatorAddress = txnDetails.sender;
+                                console.log("Got creator from transaction:", creatorAddress);
                             }
-                        } catch { }
+                        } catch (txError) {
+                            console.log("Error getting transaction details:", txError);
+                        }
                     }
-                    if (!creatorAddress || creatorAddress.includes('0000')) continue;
+
+                    if (!creatorAddress || creatorAddress.includes('0000')) {
+                        console.log("Skipping token with invalid creator:", creatorAddress);
+                        continue;
+                    }
+
                     const decodedSymbol = decodeHexString(eventData.symbol);
+                    console.log("Processing token symbol:", decodedSymbol);
+
                     // Call get_full_token_info view function
                     let fullInfo;
                     try {
@@ -130,12 +158,19 @@ export default function BuyTokenPage() {
                                 functionArguments: [creatorAddress, Array.from(new TextEncoder().encode(decodedSymbol))]
                             }
                         });
+                        console.log("Got full info for", decodedSymbol, ":", fullInfo);
                     } catch (e) {
+                        console.log("Error getting full token info for", decodedSymbol, ":", e);
                         continue;
                     }
-                    if (!fullInfo || !Array.isArray(fullInfo) || fullInfo.length < 25) continue;
+
+                    if (!fullInfo || !Array.isArray(fullInfo) || fullInfo.length < 25) {
+                        console.log("Invalid full info for", decodedSymbol, "length:", fullInfo?.length);
+                        continue;
+                    }
+
                     const iconUrl = decodeHexStringSafe(fullInfo[3]);
-                    tokens.push({
+                    const tokenInfo = {
                         symbol: decodeHexStringSafe(fullInfo[0]),
                         name: decodeHexStringSafe(fullInfo[1]),
                         decimals: Number(fullInfo[2] ?? 6),
@@ -161,18 +196,49 @@ export default function BuyTokenPage() {
                         liquidity: toStringSafe(fullInfo[22]),
                         marketCap: toStringSafe(fullInfo[23]),
                         saleStatus: decodeHexStringSafe(fullInfo[24]),
-                    });
-                } catch { }
+                    };
+
+                    console.log("Successfully processed token:", tokenInfo.symbol);
+                    tokens.push(tokenInfo);
+                } catch (tokenError) {
+                    console.log("Error processing token at index", i, ":", tokenError);
+                }
             }
+
+            console.log("Total tokens processed:", tokens.length);
             setTokens(tokens);
         } catch (e) {
-            toast({ title: "Error", description: "Failed to fetch tokens", variant: "destructive" });
+            console.error("Error fetching tokens:", e);
+            toast({
+                title: "Error",
+                description: `Failed to fetch tokens: ${e instanceof Error ? e.message : 'Unknown error'}`,
+                variant: "destructive"
+            });
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => { fetchTokens(); }, [fetchTokens]);
+    useEffect(() => {
+        // Test API connection first
+        const testConnection = async () => {
+            try {
+                console.log("Testing Aptos connection...");
+                const ledgerInfo = await aptos.getLedgerInfo();
+                console.log("Successfully connected to Aptos mainnet. Latest version:", ledgerInfo.ledger_version);
+            } catch (error) {
+                console.error("Failed to connect to Aptos:", error);
+                toast({
+                    title: "Connection Error",
+                    description: "Failed to connect to Aptos mainnet. Please check your network.",
+                    variant: "destructive"
+                });
+            }
+        };
+
+        testConnection();
+        fetchTokens();
+    }, [fetchTokens]);
 
     const handleBuy = async (token: TokenInfo) => {
         if (!connectedWallet.connected || !connectedWallet.account) {
@@ -224,7 +290,7 @@ export default function BuyTokenPage() {
                     <div>
                         Buy transaction for {token.symbol} has been sent.<br />
                         {response?.hash && (
-                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=testnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View on explorer</a>
+                            <a href={`https://explorer.aptoslabs.com/txn/${response.hash}?network=mainnet`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View on explorer</a>
                         )}
                     </div>
                 )
@@ -255,11 +321,37 @@ export default function BuyTokenPage() {
             {/* Toolbar: search, sort, filter buttons */}
             <TokenToolbar search={search} setSearch={setSearch} sortBy={sortBy} setSortBy={setSortBy} />
 
+            {/* Debug info and refresh button */}
+            <div className="flex justify-between items-center bg-gray-800 p-4 rounded-lg">
+                <div className="text-sm text-gray-300">
+                    <p>Contract: {CONTRACT_ADDRESS}</p>
+                    <p>Total tokens found: {tokens.length}</p>
+                    <p>Network: Mainnet</p>
+                </div>
+                <Button onClick={fetchTokens} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                    {loading ? "Loading..." : "Refresh Tokens"}
+                </Button>
+            </div>
+
             {/* Token grid */}
             {loading ? (
-                <div>Đang tải danh sách token...</div>
+                <div className="text-center py-8 text-gray-400">
+                    <p>Đang tải danh sách token từ mainnet...</p>
+                    <p className="text-sm mt-2">Vui lòng chờ, quá trình này có thể mất vài phút</p>
+                </div>
             ) : filteredTokens.length === 0 ? (
-                <div>Không có token nào trên contract.</div>
+                <div className="text-center py-8 text-gray-400">
+                    <p>Không có token nào được tìm thấy.</p>
+                    <p className="text-sm mt-2">Hãy kiểm tra:</p>
+                    <ul className="text-sm mt-2 space-y-1">
+                        <li>• Contract address có đúng không</li>
+                        <li>• Token đã được tạo thành công chưa</li>
+                        <li>• Thử refresh sau vài phút</li>
+                    </ul>
+                    <Button onClick={fetchTokens} className="mt-4 bg-blue-600 hover:bg-blue-700">
+                        Thử lại
+                    </Button>
+                </div>
             ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-3 gap-5">
                     {filteredTokens.map(token => (

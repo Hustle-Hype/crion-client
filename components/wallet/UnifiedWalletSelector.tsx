@@ -62,7 +62,7 @@ export function UnifiedWalletSelector() {
     const openExplorer = () => {
         if (account?.address) {
             window.open(
-                `https://explorer.aptoslabs.com/account/${account.address.toString()}?network=testnet`,
+                `https://explorer.aptoslabs.com/account/${account.address.toString()}?network=mainnet`,
                 "_blank"
             );
         }
